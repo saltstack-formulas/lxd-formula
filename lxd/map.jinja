@@ -1,0 +1,79 @@
+{% macro sls_block(dict) %}
+    {% for key, value in dict.items() %}
+    - {{ key }}: {{ value|json() }}
+    {% endfor %}
+{% endmacro %}
+
+{% set datamap  = salt['pillar.get']('lxd', {
+  'lookup': salt['grains.filter_by']({
+    'Debian': {
+      'lxd': {
+        'packages': [
+          'lxd'
+        ]
+      },
+
+      'client': {
+        'packages': [
+          'lxd-client'
+        ]
+      },
+
+      'python': {
+        'packages': [
+          'python-pylxd'
+        ],
+        'pip_packages': [
+          'libssl-dev',
+          'libffi-dev'
+        ]
+      }
+    }
+  }),
+
+  'lxd': {
+    'package': {
+      'action': 'installed',
+      'opts': {}
+    },
+
+    'run_init': 'Init will be only called once, you can set trust_password and network_address/port over config though.',
+    'run_init': False,
+
+    'init': {
+      'storage_backend': 'dir',
+      'trust_password': '',
+      'network_address': '',
+      'network_port': '',
+      'storage_create_device': '',
+      'storage_create_loop': '',
+      'storage_pool': '',
+      'done_file':'%SALT_CONFIG_DIR%/lxd_initialized'
+    },
+
+    'config': {}
+  },
+
+  'client': {
+    'package': {
+      'action': 'installed',
+      'opts': {}
+    }
+  },
+
+  'python': {
+    'use_pip': False,
+    'pip_package': {
+      'action': 'installed',
+      'opts': {}
+    },
+    'package': {
+      'action': 'installed',
+      'opts': {}
+    }
+  },
+
+  'profiles': {},
+  'remotes': {}
+
+}, merge=True) %}

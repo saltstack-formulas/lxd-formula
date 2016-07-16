@@ -1,0 +1,370 @@
+===
+LXD
+===
+
+`LXD`_ is a container "hypervisor". This formulas provides
+several states to help manage it and its containers.
+
+This is currently a **WIP**.
+
+This formula will allow you to:
+
+- Initialize LXD with storage, authentication and network settings.
+- Create some default settings for containers (profiles).
+- Pull an image from various sources.
+- Create a container with an image.
+- Start/Stop/Restart/Freeze/Unfreeze a container.
+- And finaly undo all of the above.
+
+.. _LXD: https://linuxcontainers.org/lxd/
+
+
+Requirements
+============
+
+- This has been tested with Saltstack `2016.3.1`, we don't know if it
+  works with other versions.
+- pylxd >= 2.0.3 from pip
+
+
+Installation
+============
+
+Clone and symlink
+-----------------
+
+- Put/symlink the contents of **_modules** into **salt/base/_modules/**.
+- Put/symlink the contents of **_states** into **salt/base/_states/**.
+- Put/symlink the directory **lxd** into **salt/base/**
+
+Per git remote
+--------------
+
+.. code-block:: yaml
+
+    gitfs_remotes:
+      - https://github.com/pcdummy/saltstack-lxd-formula.git
+
+
+Available states
+================
+
+.. contents::
+    :local:
+
+``lxd.init``
+-------------
+
+Does everthing below.
+
+
+``lxd.lxd``
+-----------
+
+Installs lxd manages its settings.
+
+
+Minimal examples
+++++++++++++++++
+
+To not listen on the network and use the default storage engine
+
+.. code-block:: yaml
+
+    lxd:
+      lxd:
+        run_init: True
+
+      python:
+        # Currently pylxd version 2 is required for the lxd module to work.
+        use_pip: True
+
+To listen on the network:
+
+.. code-block:: yaml
+
+    lxd:
+      lxd:
+        run_init: True
+
+        init:
+          trust_password: "PaSsW0rD"
+          network_address: "[::]"
+          network_port: "8443"
+
+
+      python:
+        # Currently pylxd version 2 is required for the lxd module to work.
+        use_pip: True
+
+Config examples
++++++++++++++++
+
+.. code-block:: yaml
+
+    lxd:
+      lxd:
+        run_init: True
+
+        init:
+          trust_password: "PaSsW0rD"
+          network_address: "[::]"
+          network_port: "8443"
+
+
+        # Lets say you configured the password wrong on init or want to change it:
+        config:
+          password:
+            key: core.trust_password
+            value: "VerySecure!337"
+            force_password: True    # this will be executed currently every time
+                                    # you execute this state.
+
+        # Now lets say somewhere else you want to change the ip LXD is listening one
+          network:
+            key: core.https_address
+            value: "[fd57:1:see:bad:c0de::14]:8443"
+
+
+      python:
+        # Currently pylxd version 2 is required for the lxd module to work.
+        use_pip: True
+
+
+``lxd.client``
+--------------
+
+Installs the lxd client - its a simple package installer for `lxd-client` (on Debian at least).
+
+
+``lxd.python``
+--------------
+
+Installs pylxd, this requires the `pip-formula`_ if you enable "use_pip".
+
+.. _pip-formula: https://github.com/saltstack-formulas/pip-formula
+
+
+``lxd.remotes``
+---------------
+
+Manages pylxd server connections, this is usefull when you want
+to create profiles/images/containers on remote LXD instances.
+
+.. attention::
+
+    It will connect to the lxd daemon(s) every time you run this state if 'password' has been given for a remote.
+
+A named remote
+++++++++++++++
+
+This is just here for other states to get its values.
+
+.. code-block:: yaml
+
+    lxd:
+      remotes:
+        srv01:
+          remote_addr" : "https://srv01:8443",
+          cert" : "/root/.config/lxc/client.crt",
+          key" : "/root/.config/lxc/client.key",
+          verify_cert" : False
+
+A remote we try to authenticate to
+++++++++++++++++++++++++++++++++++
+
+.. code-block:: yaml
+
+    lxd:
+      remotes:
+        srv02:
+          remote_addr" : "https://srv02:8443",
+          cert" : "/root/.config/lxc/client.crt",
+          key" : "/root/.config/lxc/client.key",
+          verify_cert" : False,
+          password" : "PaSsW0rD"
+
+.. attention::
+
+    It will connect to the lxd daemon srv02 every time you run this state.
+
+
+``lxd.profiles``
+----------------
+
+Manages LXD profiles, profiles are something like defaults for a container,
+you can add multible profiles to a single container.
+
+Its general a good idea to look how profiles look on the `wire`_:
+
+.. _wire: https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-10
+
+Also:
+
+.. code-block:: bash
+
+   salt-call lxd.profile_list --out=json
+
+   salt-call lxd.container_list --out=json
+
+gives nice informations about profile config keys and devices.
+
+
+A local profile that enables autostart
+++++++++++++++++++++++++++++++++++++++
+
+
+.. code-block:: yaml
+
+    lxd:
+      profiles:
+        local:    # local is special it means local unix socket, not authentication needed.
+          autostart:
+            config:
+              # Enable autostart
+              boot.autostart: 1
+              # Delay between containers in seconds.
+              boot.autostart.delay: 2
+              # The lesser the later it gets started on autostart.
+              boot.autostart.priority: 1
+
+
+The same profile on the "named" remote "srv01"
+++++++++++++++++++++++++++++++++++++++++++++++
+
+.. code-block:: yaml
+
+    lxd:
+      profiles:
+        srv01:    # Notice the change from "local" to "srv01"
+          autostart:
+            config:
+              # Enable autostart
+              boot.autostart: 1
+              # Delay between containers in seconds.
+              boot.autostart.delay: 2
+              # The lesser the later it gets started on autostart.
+              boot.autostart.priority: 1
+
+
+A local profile that adds a interface
++++++++++++++++++++++++++++++++++++++
+
+.. code-block:: yaml
+
+    lxd:
+      profiles:
+        local:
+          add_eth1:
+            devices:
+              eth1:
+                type: "nic"
+                nictype": "bridged"
+                parent": "br0"
+
+
+A local profile that adds a shared mount point
+++++++++++++++++++++++++++++++++++++++++++++++
+
+.. code-block:: yaml
+
+    lxd:
+      profiles:
+        local:
+          shared_mount:
+            devices:
+              shared_mount:
+                type: "disk"
+                # Source on the host
+                source: "/home/shared"
+                # Path in the container
+                path: "/home/shared"
+
+
+A limited container profile
++++++++++++++++++++++++++++
+
+See `stgraber's blog`_
+
+.. _stgraber's blog: https://www.stgraber.org/2016/03/26/lxd-2-0-resource-control-412/
+
+.. code-block:: yaml
+
+    lxd:
+      profiles:
+        local:
+          small:
+            config:
+              limits.cpu: 1
+              limits.memory: 512MB
+              limits.read: 20Iops
+              limits.write: 10Iops
+
+
+MongoDB special case
+++++++++++++++++++++
+
+If you use the MongoDB ext_pillar you will notice that it doesn't like
+dots in field names, this is why we added a special case for that:
+
+.. code-block:: yaml
+
+    lxd:
+      profiles:
+        local:
+          autostart:
+            config:
+              # Notice the key/value style here
+              - key: boot.autostart
+                value: 1
+              - key: boot.autostart.delay
+                value: 2
+              - key: boot.autostart.priority
+                value: 1
+
+
+To remove a profile
++++++++++++++++++++
+
+.. code-block:: yaml
+
+    lxd:
+      profiles:
+        local:
+          autostart:
+            removed: True
+
+
+``lxd.images``
+--------------
+
+Manages LXD images.
+
+
+``lxd.containers``
+------------------
+
+Manages LXD containers, this includes `lxd.images`, `lxd.profiles` and `lxd.remotes`.
+
+
+LXD execution Module
+====================
+
+Please see `execution_module doc`_ for it, or better directly the well documented
+sourcecode of the `LXD Module`_.
+
+.. _execution_module doc: doc/execution_module.rst
+.. _LXD Module: _modules/lxd.py
+
+
+Authors
+=======
+
+`René Jochum`_ <rene@jochums.at>
+
+.. _René Jochum: https://rene.jochums.at
+
+License
+=======
+
+Apache Version 2.0
