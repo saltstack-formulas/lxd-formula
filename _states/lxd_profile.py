@@ -18,19 +18,23 @@ from salt.exceptions import CommandExecutionError
 from salt.exceptions import SaltInvocationError
 import salt.ext.six as six
 
+__docformat__ = 'restructuredtext en'
+
 # PEP8
 __salt__ = {}
 __opts__ = {}
+
+__virtualname__ = 'lxd_profile'
 
 
 def __virtual__():
     '''
     Only load if the lxd module is available in __salt__
     '''
-    return 'lxd_profile' if 'lxd.version' in __salt__ else False
+    return __virtualname__ if 'lxd.version' in __salt__ else False
 
 
-def managed(name, description=None, config=None, devices=None,
+def present(name, description=None, config=None, devices=None,
             remote_addr=None, cert=None, key=None, verify_cert=True):
     '''
     Creates or updates LXD profiles.
@@ -167,10 +171,10 @@ def managed(name, description=None, config=None, devices=None,
     return _success(ret, '{0} changes'.format(len(ret['changes'].keys())))
 
 
-def removed(name, remote_addr=None, cert=None,
-            key=None, verify_cert=True, **kwargs):
+def absent(name, remote_addr=None, cert=None,
+           key=None, verify_cert=True, **kwargs):
     '''
-    Removes a LXD profile from the daemon.
+    Ensure a LXD profile is not present, removing it if present.
 
     name :
         The name of the profile to remove.

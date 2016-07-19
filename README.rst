@@ -16,6 +16,9 @@ This formula will allow you to:
 - Start/Stop/Restart/Freeze/Unfreeze a container.
 - And finaly undo all of the above.
 
+Before we forget it, `LXD`_ allows you to **migrate unprivliged containers**
+from one host to another!
+
 .. _LXD: https://linuxcontainers.org/lxd/
 
 
@@ -332,7 +335,7 @@ To remove a profile
       profiles:
         local:
           autostart:
-            removed: True
+            absent: True
 
 
 ``lxd.images``

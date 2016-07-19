@@ -18,10 +18,10 @@ include:
 lxd_profile_{{ remotename }}_{{ name }}:
   lxd_profile:
     - name: {{ name }}
-        {%- if profile.get('removed', False) %}
-    - removed
+        {%- if profile.get('absent', False) %}
+    - absent
         {%- else %}
-    - managed
+    - present
         {%- endif %}
         {%- if profile.get('description', False) %}
     - description: "{{ profile.description }}"

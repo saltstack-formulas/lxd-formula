@@ -35,8 +35,10 @@ several functions to help manage it and its containers.
 # Import python libs
 from __future__ import absolute_import, print_function
 import os
+from distutils.version import StrictVersion
 
 # Import salt libs
+import salt.utils
 from salt.exceptions import CommandExecutionError
 from salt.exceptions import SaltInvocationError
 import salt.ext.six as six
@@ -49,8 +51,12 @@ except ImportError:
     PYLXD_AVAILABLE = False
 
 
+__docformat__ = 'restructuredtext en'
+
 # PEP8
 __salt__ = {}
+
+_pylxd_minimal_version = "2.0.3"
 
 # Keep in sync with: https://github.com/lxc/lxd/blob/master/shared/architectures.go  # noqa
 _architectures = {
@@ -72,6 +78,18 @@ __virtualname__ = 'lxd'
 
 def __virtual__():
     if PYLXD_AVAILABLE:
+        # Increment this once we use the new features of PyLXD (images!)
+        if (StrictVersion(pylxd.__version__) <
+                StrictVersion(_pylxd_minimal_version)):
+            return (
+                False,
+                ('The lxd execution module cannot be loaded:'
+                 ' pylxd "{0}" is not supported,'
+                 ' you need at least pylxd "{1}"').format(
+                    pylxd.__version__,
+                    _pylxd_minimal_version)
+            )
+
         return __virtualname__
 
     return (
@@ -112,6 +130,7 @@ def pylxd_version():
     return pylxd.__version__
 
 
+@salt.utils.which('lxd')
 def init(storage_backend='dir', trust_password=None, network_address=None,
          network_port=None, storage_create_device=None,
          storage_create_loop=None, storage_pool=None):
@@ -196,6 +215,8 @@ def init(storage_backend='dir', trust_password=None, network_address=None,
     return output
 
 
+@salt.utils.which('lxd')
+@salt.utils.which('lxc')
 def config_set(key, value):
     '''
     CLI Examples:
@@ -228,6 +249,8 @@ def config_set(key, value):
     return 'Config value "{0}" successfully set.'.format(key),
 
 
+@salt.utils.which('lxd')
+@salt.utils.which('lxc')
 def config_get(key):
     cmd = 'lxc config get "{0}"'.format(
         key
@@ -325,11 +348,12 @@ def pylxd_client_get(remote_addr=None, cert=None, key=None, verify_cert=True):
             "Failed to connect to '{0}'".format(remote_addr)
         )
 
-    except TypeError:
+    except TypeError as e:
         # Happens when the verification failed.
         raise CommandExecutionError(
             ('Failed to connect to "{0}",'
-             ' looks like the SSL verification failed.').format(remote_addr)
+             ' looks like the SSL verification failed, error was: {1}'
+             ).format(remote_addr, str(e))
         )
 
     return client
@@ -462,6 +486,9 @@ def container_create(name, source, profiles=['default'],
         raise CommandExecutionError(
             str(e)
         )
+
+    if not wait:
+        return container.json()['operation']
 
     return _dict_update(container.marshall(), {'name': container.name})
 
@@ -699,7 +726,7 @@ def profile_list(list_names=False, remote_addr=None,
 
         .. code-block:: bash
 
-            salt '*' lxd.profile_list true
+            salt '*' lxd.profile_list true --out=json
             salt '*' lxd.profile_list --out=json
     '''
 
@@ -1039,6 +1066,77 @@ def profile_device_delete(name, device_name, remote_addr=None,
     )
 
 
+##################
+# Image Management
+##################
+def image_list(list_aliases=False, remote_addr=None,
+               cert=None, key=None, verify_cert=True):
+    ''' Lists all images from the LXD.
+
+        list_aliases :
+
+            Return a dict with the fingerprint as key and
+            a list of aliases as value instead.
+
+        remote_addr, cert, key, verify_cert:
+            See pylxd_client_get
+
+        CLI Examples:
+
+        .. code-block:: bash
+
+            salt '*' lxd.image_list true --out=json
+            salt '*' lxd.image_list --out=json
+    '''
+    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+
+    images = client.images.all()
+    if list_aliases:
+        return {i.fingerprint: [a['name'] for a in i.aliases] for i in images}
+
+    return [i.marshall() for i in images]
+
+
+'''
+# This needs pcdummy's version of pylxd.
+def image_copy(source, wait=True, remote_addr=None,
+               cert=None, key=None, verify_cert=True, **kwargs):
+    ''
+
+        CLI Examples:
+
+        .. code-block:: bash
+
+            salt-call lxd.image_copy "{type: 'image', mode: 'pull', server: 'https://srv01:8443', fingerprint: 'f452cda3bccb2903e56d53e402b9d35334b4276783d098a879be5d74b04e62e2', certificate: '-----BEGIN CERTIFICATE-----MIIGED-----END CERTIFICATE-----'}" true auto_update=true filename=ubuntu-16.04-server-cloudimg-amd64-lxd.tar.xz
+
+        You need to provide a certificate for private images.
+        See: https://github.com/lxc/lxd/blob/3207c2c67d02b3c7504c118f9af6262747103d65/doc/rest-api.md#post-6
+
+    # noqa
+    ''
+    if not isinstance(source, dict):
+        raise SaltInvocationError('Argument source must be a dict')
+
+    if 'fingerprint' not in source:
+        raise SaltInvocationError(
+            'pylxd requires a fingerprint for the source'
+        )
+
+    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+
+    try:
+        image = client.images.copy(source, wait, **kwargs)
+    except pylxd.exceptions.LXDAPIException as e:
+        raise CommandExecutionError(
+            'Failed to copy the image, error was: {0}'.format(str(e))
+        )
+
+    if not wait:
+        return image.json()['operation']
+
+    return image.marshall()
+'''
+
 ################
 # Helper Methods
 ################
@@ -1238,11 +1336,6 @@ def _set_property_dict_item(obj, prop, key, value):
         if device_type == 'disk' and 'path' not in value:
             raise SaltInvocationError(
                 "path must be given as parameter"
-            )
-
-        if key in getattr(obj, 'devices'):
-            raise SaltInvocationError(
-                "Device '{0}' exists".format(value['name'])
             )
 
         for k in value.keys():

@@ -22,6 +22,8 @@ from salt.exceptions import SaltInvocationError
 import logging
 log = logging.getLogger(__name__)
 
+__docformat__ = 'restructuredtext en'
+
 # PEP8
 __opts__ = {}
 __salt__ = {}
@@ -35,7 +37,7 @@ def __virtual__():
     '''
     Only load if the lxd module is available in __salt__
     '''
-    return 'lxd' if 'lxd.version' in __salt__ else False
+    return __virtualname__ if 'lxd.version' in __salt__ else False
 
 
 def init(storage_backend='dir', trust_password=None, network_address=None,
