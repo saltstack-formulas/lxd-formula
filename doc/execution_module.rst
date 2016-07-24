@@ -28,20 +28,20 @@ remote_addr :
 
     Examples:
         - https://myserver.lan:8443
-        - http+unix:///var/lib/mysocket.sock
+        - /var/lib/mysocket.sock
 
 cert :
     PEM Formatted SSL Zertifikate.
 
     Example:
 
-        - $HOME/.config/lxc/client.crt
+        - ~/.config/lxc/client.crt
 
 key :
     PEM Formatted SSL Key.
 
     Example:
-        - $HOME/.config/lxc/client.key
+        - ~/.config/lxc/client.key
 
 verify_cert : True
     Wherever to verify the cert, this is by default True

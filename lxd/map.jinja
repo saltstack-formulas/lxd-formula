@@ -76,6 +76,14 @@
   },
 
   'profiles': {},
-  'remotes': {}
+  'remotes': {
+    'local': {
+      'remote_addr': '/var/lib/lxd/unix.socket',
+      'cert': '~/.config/lxc/client.crt',
+      'key': '~/.config/lxc/client.key',
+      'verify_cert': False
+    }
+  },
+  'containers': {}
 
 }, merge=True) %}

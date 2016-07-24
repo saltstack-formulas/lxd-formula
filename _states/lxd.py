@@ -4,6 +4,24 @@ Manage LXD profiles.
 
 .. versionadded:: unknown
 
+.. note:
+
+    - `pylxd`_ version 2 is required to let this work,
+      currently only available via pip.
+
+        To install on Ubuntu:
+
+        $ apt-get install libssl-dev python-pip
+        $ pip install -U pylxd
+
+    - you need lxd installed on the minion
+      for the init() and version() methods.
+
+    - for the config_get() and config_get() methods
+      you need to have lxd-client installed.
+
+.. _pylxd: https://github.com/lxc/pylxd/blob/master/doc/source/installation.rst
+
 :maintainer: René Jochum <rene@jochums.at>
 :maturity: new
 :depends: python-pylxd
@@ -219,7 +237,7 @@ def authenticate(remote_addr, password, cert, key, verify_cert=True, name=''):
 
         Examples:
             https://myserver.lan:8443
-            http+unix:///var/lib/mysocket.sock
+            /var/lib/mysocket.sock
 
     password :
         The PaSsW0rD

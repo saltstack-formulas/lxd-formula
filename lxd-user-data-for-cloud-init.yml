@@ -1,0 +1,87 @@
+config:
+  user.user-data: |
+    #cloud-config
+    output:
+      all: '| tee -a /var/log/cloud-init-output.log'
+    runcmd:
+    - set -xe
+    - install -D -m 644 /dev/null '/etc/systemd/system/juju-clean-shutdown.service'
+    - |-
+      printf '%s\n' '
+      [Unit]
+      Description=Stop all network interfaces on shutdown
+      DefaultDependencies=false
+      After=final.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/sbin/ifdown -a -v --force
+      StandardOutput=tty
+      StandardError=tty
+
+      [Install]
+      WantedBy=final.target
+      ' > '/etc/systemd/system/juju-clean-shutdown.service'
+    - /bin/systemctl enable '/etc/systemd/system/juju-clean-shutdown.service'
+    - install -D -m 644 /dev/null '/var/lib/juju/nonce.txt'
+    - printf '%s\n' 'user-admin:bootstrap' > '/var/lib/juju/nonce.txt'
+    users:
+    - groups:
+      - adm
+      - audio
+      - cdrom
+      - dialout
+      - dip
+      - floppy
+      - netdev
+      - plugdev
+      - sudo
+      - video
+      lock_passwd: true
+      name: ubuntu
+      shell: /bin/bash
+      ssh-authorized-keys:
+    runcmd:
+    - set -xe
+    - install -D -m 644 /dev/null '/etc/systemd/system/juju-clean-shutdown.service'
+    - |-
+      printf '%s\n' '
+      [Unit]
+      Description=Stop all network interfaces on shutdown
+      DefaultDependencies=false
+      After=final.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/sbin/ifdown -a -v --force
+      StandardOutput=tty
+      StandardError=tty
+
+      [Install]
+      WantedBy=final.target
+      ' > '/etc/systemd/system/juju-clean-shutdown.service'
+    - /bin/systemctl enable '/etc/systemd/system/juju-clean-shutdown.service'
+    - install -D -m 644 /dev/null '/var/lib/juju/nonce.txt'
+    - printf '%s\n' 'user-admin:bootstrap' > '/var/lib/juju/nonce.txt'
+    users:
+    - groups:
+      - adm
+      - audio
+      - cdrom
+      - dialout
+      - dip
+      - floppy
+      - netdev
+      - plugdev
+      - sudo
+      - video
+      lock_passwd: true
+      name: ubuntu
+      shell: /bin/bash
+      ssh-authorized-keys:
+      - ssh-rsa KEY_REDACTED
+        Juju:juju-client-key
+      - ssh-rsa KEYS_REDACTED
+        Juju:mbruzek@workhorse
+      sudo:
+      - ALL=(ALL) NOPASSWD:ALL

@@ -4,6 +4,24 @@ Manage LXD profiles.
 
 .. versionadded:: unknown
 
+.. note:
+
+    - `pylxd`_ version 2 is required to let this work,
+      currently only available via pip.
+
+        To install on Ubuntu:
+
+        $ apt-get install libssl-dev python-pip
+        $ pip install -U pylxd
+
+    - you need lxd installed on the minion
+      for the init() and version() methods.
+
+    - for the config_get() and config_get() methods
+      you need to have lxd-client installed.
+
+.. _pylxd: https://github.com/lxc/pylxd/blob/master/doc/source/installation.rst
+
 :maintainer: René Jochum <rene@jochums.at>
 :maturity: new
 :depends: python-pylxd
@@ -37,13 +55,13 @@ def __virtual__():
 def present(name, description=None, config=None, devices=None,
             remote_addr=None, cert=None, key=None, verify_cert=True):
     '''
-    Creates or updates LXD profiles.
+    Creates or updates LXD profiles
 
     name :
-        The name of the profile to create/update.
+        The name of the profile to create/update
 
     description :
-        A description string or None (None = unset).
+        A description string
 
     config :
         A config dict or None (None = unset).
@@ -61,19 +79,19 @@ def present(name, description=None, config=None, devices=None,
 
         Examples:
             https://myserver.lan:8443
-            http+unix:///var/lib/mysocket.sock
+            /var/lib/mysocket.sock
 
     cert :
         PEM Formatted SSL Zertifikate.
 
         Examples:
-            $HOME/.config/lxc/client.crt
+            ~/.config/lxc/client.crt
 
     key :
         PEM Formatted SSL Key.
 
         Examples:
-            $HOME/.config/lxc/client.key
+            ~/.config/lxc/client.key
 
     verify_cert : True
         Wherever to verify the cert, this is by default True
@@ -111,14 +129,19 @@ def present(name, description=None, config=None, devices=None,
         # Profile not found
         pass
 
-    if not profile and __opts__['test']:
-        msg = 'Would create the profile "{0}"'.format(name)
-        ret['changes'] = {'created': msg}
-        return _unchanged(ret, msg)
+    if description is None:
+        description = six.text_type()
 
-    elif not profile:
+    if profile is None:
+        if __opts__['test']:
+            # Test is on, just return that we would create the profile
+            msg = 'Would create the profile "{0}"'.format(name)
+            ret['changes'] = {'created': msg}
+            return _unchanged(ret, msg)
+
+        # Create the profile
         try:
-            profile = __salt__['lxd.profile_create'](
+            __salt__['lxd.profile_create'](
                 name,
                 config,
                 devices,
@@ -136,17 +159,19 @@ def present(name, description=None, config=None, devices=None,
         ret['changes'] = {'created': msg}
         return _success(ret, msg)
 
-    config, devices, description = __salt__['lxd.normalize_input_values'](
+    config, devices = __salt__['lxd.normalize_input_values'](
         config,
-        devices,
-        description
+        devices
     )
 
     #
     # Description change
     #
     if six.text_type(profile.description) != six.text_type(description):
-        ret['changes']['description'] = 'Description changed.'
+        ret['changes']['description'] = (
+            'Description changed, from "{0}" to "{1}".'
+        ).format(profile.description, description)
+
         profile.description = description
 
     changes = __salt__['lxd.sync_config_devices'](
@@ -172,7 +197,7 @@ def present(name, description=None, config=None, devices=None,
 
 
 def absent(name, remote_addr=None, cert=None,
-           key=None, verify_cert=True, **kwargs):
+           key=None, verify_cert=True):
     '''
     Ensure a LXD profile is not present, removing it if present.
 
@@ -185,19 +210,19 @@ def absent(name, remote_addr=None, cert=None,
 
         Examples:
             https://myserver.lan:8443
-            http+unix:///var/lib/mysocket.sock
+            /var/lib/mysocket.sock
 
     cert :
         PEM Formatted SSL Zertifikate.
 
         Examples:
-            $HOME/.config/lxc/client.crt
+            ~/.config/lxc/client.crt
 
     key :
         PEM Formatted SSL Key.
 
         Examples:
-            $HOME/.config/lxc/client.key
+            ~/.config/lxc/client.key
 
     verify_cert : True
         Wherever to verify the cert, this is by default True

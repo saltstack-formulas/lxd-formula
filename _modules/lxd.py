@@ -35,10 +35,10 @@ several functions to help manage it and its containers.
 # Import python libs
 from __future__ import absolute_import, print_function
 import os
-from distutils.version import StrictVersion
+from distutils.version import LooseVersion
 
 # Import salt libs
-import salt.utils
+import salt.utils.decorators
 from salt.exceptions import CommandExecutionError
 from salt.exceptions import SaltInvocationError
 import salt.ext.six as six
@@ -50,13 +50,16 @@ try:
 except ImportError:
     PYLXD_AVAILABLE = False
 
+# Set up logging
+import logging
+log = logging.getLogger(__name__)
 
 __docformat__ = 'restructuredtext en'
 
 # PEP8
 __salt__ = {}
 
-_pylxd_minimal_version = "2.0.3"
+_pylxd_minimal_version = "2.0.4"
 
 # Keep in sync with: https://github.com/lxc/lxd/blob/master/shared/architectures.go  # noqa
 _architectures = {
@@ -71,22 +74,25 @@ _architectures = {
     's390x': '8'
 }
 
-_CONTAINER_STATUS_RUNNING = 103
+# Keep in sync with: https://github.com/lxc/lxd/blob/master/shared/status.go
+CONTAINER_STATUS_RUNNING = 103
 
 __virtualname__ = 'lxd'
+
+_connection_pool = {}
 
 
 def __virtual__():
     if PYLXD_AVAILABLE:
         # Increment this once we use the new features of PyLXD (images!)
-        if (StrictVersion(pylxd.__version__) <
-                StrictVersion(_pylxd_minimal_version)):
+        if (LooseVersion(pylxd_version()) <
+                LooseVersion(_pylxd_minimal_version)):
             return (
                 False,
                 ('The lxd execution module cannot be loaded:'
                  ' pylxd "{0}" is not supported,'
                  ' you need at least pylxd "{1}"').format(
-                    pylxd.__version__,
+                    pylxd_version(),
                     _pylxd_minimal_version)
             )
 
@@ -102,6 +108,7 @@ def __virtual__():
 ################
 # LXD Management
 ################
+@salt.utils.decorators.which('lxd')
 def version():
     '''
     Returns the actual lxd version.
@@ -130,7 +137,7 @@ def pylxd_version():
     return pylxd.__version__
 
 
-@salt.utils.which('lxd')
+@salt.utils.decorators.which('lxd')
 def init(storage_backend='dir', trust_password=None, network_address=None,
          network_port=None, storage_create_device=None,
          storage_create_loop=None, storage_pool=None):
@@ -215,8 +222,8 @@ def init(storage_backend='dir', trust_password=None, network_address=None,
     return output
 
 
-@salt.utils.which('lxd')
-@salt.utils.which('lxc')
+@salt.utils.decorators.which('lxd')
+@salt.utils.decorators.which('lxc')
 def config_set(key, value):
     '''
     CLI Examples:
@@ -249,8 +256,8 @@ def config_set(key, value):
     return 'Config value "{0}" successfully set.'.format(key),
 
 
-@salt.utils.which('lxd')
-@salt.utils.which('lxc')
+@salt.utils.decorators.which('lxd')
+@salt.utils.decorators.which('lxc')
 def config_get(key):
     cmd = 'lxc config get "{0}"'.format(
         key
@@ -278,19 +285,19 @@ def pylxd_client_get(remote_addr=None, cert=None, key=None, verify_cert=True):
 
         Examples:
             https://myserver.lan:8443
-            http+unix:///var/lib/mysocket.sock
+            /var/lib/mysocket.sock
 
     cert :
         PEM Formatted SSL Zertifikate.
 
         Examples:
-            $HOME/.config/lxc/client.crt
+            ~/.config/lxc/client.crt
 
     key :
         PEM Formatted SSL Key.
 
         Examples:
-            $HOME/.config/lxc/client.key
+            ~/.config/lxc/client.key
 
     verify_cert : True
         Wherever to verify the cert, this is by default True
@@ -304,14 +311,20 @@ def pylxd_client_get(remote_addr=None, cert=None, key=None, verify_cert=True):
     # noqa
     '''
 
+    pool_key = '|'.join((remote_addr, cert, key, six.text_type(verify_cert),))
+
+    if pool_key in _connection_pool:
+        log.debug((
+            'Returning the client "{0}" from our connection pool'
+        ).format(remote_addr))
+        return _connection_pool[pool_key]
+
     try:
         if remote_addr is None:
             client = pylxd.Client()
         else:
-            if remote_addr.startswith('http+unix://'):
-                client = pylxd.Client(
-                    endpoint=remote_addr
-                )
+            if remote_addr.startswith('/'):
+                client = pylxd.Client(remote_addr)
             else:
                 if cert is None or key is None:
                     raise SaltInvocationError(
@@ -356,6 +369,8 @@ def pylxd_client_get(remote_addr=None, cert=None, key=None, verify_cert=True):
              ).format(remote_addr, str(e))
         )
 
+    _connection_pool[pool_key] = client
+
     return client
 
 
@@ -374,7 +389,46 @@ def pylxd_save_object(obj):
 
 def authenticate(remote_addr, password, cert, key, verify_cert=True):
     '''
-    # https://github.com/lxc/pylxd/blob/master/doc/source/authentication.rst
+    Authenticate with a remote LXDaemon.
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if you
+        provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+
+    password :
+        The password of the remote.
+
+    cert :
+        PEM Formatted SSL Zertifikate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+
+    CLI Example:
+
+    .. code-block:: bash
+
+        $ salt '*' lxd.authenticate https://srv01:8443 <yourpass> ~/.config/lxc/client.crt ~/.config/lxc/client.key false
+
+    See the `requests-docs`_ for the SSL stuff.
+
+    .. _requests-docs: http://docs.python-requests.org/en/master/user/advanced/#ssl-cert-verification
+
+    # noqa
     '''
     client = pylxd_client_get(remote_addr, cert, key, verify_cert)
 
@@ -428,7 +482,7 @@ def container_create(name, source, profiles=['default'],
                      config={}, devices={}, architecture='x86_64',
                      ephemeral=False, wait=True,
                      remote_addr=None, cert=None, key=None, verify_cert=True,
-                     **kwargs):
+                     _raw=False):
     '''
     CLI Examples:
 
@@ -445,29 +499,21 @@ def container_create(name, source, profiles=['default'],
             "'profiles' must be formatted as list/tuple/set."
         )
 
-    if not isinstance(config, dict):
-        raise SaltInvocationError(
-            "'config' must be formatted as dictionary."
-        )
-
-    if not isinstance(devices, dict):
-        raise SaltInvocationError(
-            "'devices' must be formatted as dictionary."
-        )
-
     if architecture not in _architectures:
         raise SaltInvocationError(
             ("Unknown architecture '{0}' "
-             "given for container '{1}'").format(architecture, name)
+             "given for the container '{1}'").format(architecture, name)
         )
 
     if isinstance(source, six.string_types):
         source = {'type': 'image', 'alias': source}
 
-    config, devices, description = normalize_input_values(
+    import pprint; pprint.pprint(source)
+    pprint.pprint(profiles)
+
+    config, devices, normalize_input_values(
         config,
-        devices,
-        u''
+        devices
     )
 
     try:
@@ -489,6 +535,9 @@ def container_create(name, source, profiles=['default'],
 
     if not wait:
         return container.json()['operation']
+
+    if _raw:
+        return container
 
     return _dict_update(container.marshall(), {'name': container.name})
 
@@ -527,24 +576,20 @@ def container_delete(name, remote_addr=None,
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
-    container.delete()
+    container.delete(wait=True)
     return True
 
 
-def container_rename(name, newname, wait=True, remote_addr=None,
+def container_rename(name, newname, remote_addr=None,
                      cert=None, key=None, verify_cert=True):
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
 
-    if container.status_code == _CONTAINER_STATUS_RUNNING:
+    if container.status_code == CONTAINER_STATUS_RUNNING:
         raise SaltInvocationError(
             "Can't rename the running container '{0}'.".format(name)
         )
-
-    if not wait:
-        container.rename(newname, wait=False)
-        return "Renaming in progress"
 
     return _dict_update(
         container.rename(newname, wait=True).marshall(),
@@ -560,10 +605,13 @@ def container_start(name, remote_addr=None,
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
-    return _dict_update(container.start().marshall(), {'name': container.name})
+    return _dict_update(
+        container.start(wait=True).marshall(),
+        {'name': container.name}
+    )
 
 
-def container_stop(name, remote_addr=None,
+def container_stop(name, timeout=30, force=True, remote_addr=None,
                    cert=None, key=None, verify_cert=True):
     '''
     It will always return status=True even if the container is stopped.
@@ -571,7 +619,10 @@ def container_stop(name, remote_addr=None,
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
-    return _dict_update(container.stop().marshall(), {'name': container.name})
+    return _dict_update(
+        container.stop(timeout, force, wait=True).marshall(),
+        {'name': container.name}
+    )
 
 
 def container_restart(name, remote_addr=None,
@@ -580,7 +631,7 @@ def container_restart(name, remote_addr=None,
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
     return _dict_update(
-        container.restart().marshall(),
+        container.restart(wait=True).marshall(),
         {'name': container.name}
     )
 
@@ -594,7 +645,7 @@ def container_freeze(name, remote_addr=None,
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
     return _dict_update(
-        container.freeze().marshall(),
+        container.freeze(wait=True).marshall(),
         {'name': container.name}
     )
 
@@ -608,7 +659,84 @@ def container_unfreeze(name, remote_addr=None,
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
     return _dict_update(
-        container.unfreeze().marshall(),
+        container.unfreeze(wait=True).marshall(),
+        {'name': container.name}
+    )
+
+
+def container_migrate(name,
+                      stop_and_start=False,
+                      remote_addr=None,
+                      cert=None,
+                      key=None,
+                      verify_cert=True,
+                      src_remote_addr=None,
+                      src_cert=None,
+                      src_key=None,
+                      src_verify_cert=None):
+    ''' Migrate a container.
+
+        If the container is running, it either must be shut down
+        first (use stop_and_start=True) or criu must be installed
+        on the source and destination machines.
+
+        For this operation both certs need to be authenticated,
+        use :mod:`lxd.authenticate <salt.modules.lxd.authenticate`
+        to authenticate your cert(s).
+
+        name :
+            Name of the container to migrate
+
+        stop_and_start :
+            Stop the container on the source and start it on dest
+
+        CLI Example:
+
+        .. code-block:: bash
+
+            # Authorize
+            salt '*' lxd.authenticate https://srv01:8443 <yourpass> ~/.config/lxc/client.crt ~/.config/lxc/client.key false
+            salt '*' lxd.authenticate https://srv02:8443 <yourpass> ~/.config/lxc/client.crt ~/.config/lxc/client.key false
+
+            # Migrate phpmyadmin from srv01 to srv02
+            salt '*' lxd.container_migrate phpmyadmin stop_and_start=true remote_addr=https://srv02:8443 cert=~/.config/lxc/client.crt key=~/.config/lxc/client.key verify_cert=False src_remote_addr=https://srv01:8443
+
+    # noqa
+    '''
+    if src_cert is None:
+        src_cert = cert
+
+    if src_key is None:
+        src_key = key
+
+    if src_verify_cert is None:
+        src_verify_cert = verify_cert
+
+    container = container_get(
+        name, src_remote_addr, src_cert, src_key, src_verify_cert, _raw=True
+    )
+
+    was_running = container.status_code == CONTAINER_STATUS_RUNNING
+    if stop_and_start and was_running:
+        container.stop(wait=True)
+
+    dest_client = pylxd_client_get(
+        remote_addr, cert, key, verify_cert
+    )
+
+    try:
+        dest_container = container.migrate(dest_client, wait=True)
+    except pylxd.exceptions.LXDAPIException as e:
+        raise CommandExecutionError(str(e))
+
+    # Remove the source container
+    container.delete(wait=True)
+
+    if stop_and_start and was_running:
+        dest_container.start(wait=True)
+
+    return _dict_update(
+        dest_container.marshall(),
         {'name': container.name}
     )
 
@@ -705,6 +833,8 @@ def container_file_put(name, src, dst, recurse=False, remove_existing=False,
 
 def container_file_get(name, src, dst, remote_addr=None,
                        cert=None, key=None, verify_cert=True):
+    ''' TODO: This is a WIP.
+    '''
     dst = os.path.expanduser(dst)
 
 
@@ -778,10 +908,9 @@ def profile_create(name, config=None, devices=None, description=None,
     '''
     client = pylxd_client_get(remote_addr, cert, key, verify_cert)
 
-    config, devices, description = normalize_input_values(
+    config, devices = normalize_input_values(
         config,
-        devices,
-        description
+        devices
     )
 
     profile = client.profiles.create(name, config, devices)
@@ -1137,10 +1266,11 @@ def image_copy(source, wait=True, remote_addr=None,
     return image.marshall()
 '''
 
+
 ################
 # Helper Methods
 ################
-def normalize_input_values(config, devices, description):
+def normalize_input_values(config, devices):
     # This is special for pcdummy and his ext_pillar mongo usage.
     #
     # It translates:
@@ -1175,10 +1305,8 @@ def normalize_input_values(config, devices, description):
         for dn in devices:
             for k, v in six.iteritems(devices[dn]):
                 devices[dn][k] = v
-    if description is None:
-        description = six.text_type()
 
-    return (config, devices, description,)
+    return (config, devices,)
 
 
 def sync_config_devices(obj, newconfig, newdevices, test=False):
@@ -1222,6 +1350,10 @@ def sync_config_devices(obj, newconfig, newdevices, test=False):
         config_changes = {}
         # Removed keys
         for k in ock.difference(cck):
+            # Ignore LXD internals.
+            if k.startswith('volatile.'):
+                continue
+
             if not test:
                 config_changes[k] = (
                     'Removed config key "{0}", its value was "{1}"'
@@ -1234,6 +1366,10 @@ def sync_config_devices(obj, newconfig, newdevices, test=False):
 
         # same keys
         for k in cck.intersection(ock):
+            # Ignore LXD internals.
+            if k.startswith('volatile.'):
+                continue
+
             if newconfig[k] != obj.config[k]:
                 if not test:
                     config_changes[k] = (
@@ -1249,6 +1385,10 @@ def sync_config_devices(obj, newconfig, newdevices, test=False):
 
         # New keys
         for k in cck.difference(ock):
+            # Ignore LXD internals.
+            if k.startswith('volatile.'):
+                continue
+
             if not test:
                 config_changes[k] = (
                     'Added config key "{0}" = "{1}"'
@@ -1281,6 +1421,10 @@ def sync_config_devices(obj, newconfig, newdevices, test=False):
 
         devices_changes = {}
         for k in dk:
+            # Ignore LXD internals.
+            if k == u'root':
+                continue
+
             if not test:
                 devices_changes[k] = (
                     'Removed device "{0}"'
@@ -1292,6 +1436,10 @@ def sync_config_devices(obj, newconfig, newdevices, test=False):
                 ).format(k)
 
         for k, v in six.iteritems(obj.devices):
+            # Ignore LXD internals also for new devices.
+            if k == u'root':
+                continue
+
             if newdevices[k] != v:
                 if not test:
                     devices_changes[k] = (

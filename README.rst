@@ -16,8 +16,8 @@ This formula will allow you to:
 - Start/Stop/Restart/Freeze/Unfreeze a container.
 - And finaly undo all of the above.
 
-Before we forget it, `LXD`_ allows you to **migrate unprivliged containers**
-from one host to another!
+Before we forget it, `LXD`_ and this formula allows you to
+**migrate unprivliged containers** from one host to another!
 
 .. _LXD: https://linuxcontainers.org/lxd/
 
@@ -120,7 +120,7 @@ Config examples
           password:
             key: core.trust_password
             value: "VerySecure!337"
-            force_password: True    # this will be executed currently every time
+            force_password: True    # Currently this will be executed every time
                                     # you execute this state.
 
         # Now lets say somewhere else you want to change the ip LXD is listening one
@@ -158,6 +158,25 @@ to create profiles/images/containers on remote LXD instances.
 
     It will connect to the lxd daemon(s) every time you run this state if 'password' has been given for a remote.
 
+.. attention::
+
+    Migrations and image copies don't work with provided "local" endpoint, overwrite it if you want to migrate from/to local.
+
+Overwrite **local**:
+++++++++++++++++++++
+
+Migrations and image copies don't work with provided "local" endpoint, overwrite it.
+
+.. code-block:: yaml
+
+    lxd:
+      remotes:
+        local:
+          remote_addr" : "https://srv02:8443"
+          cert" : "/root/.config/lxc/client.crt"
+          key" : "/root/.config/lxc/client.key"
+          verify_cert" : False
+
 A named remote
 ++++++++++++++
 
@@ -168,9 +187,9 @@ This is just here for other states to get its values.
     lxd:
       remotes:
         srv01:
-          remote_addr" : "https://srv01:8443",
-          cert" : "/root/.config/lxc/client.crt",
-          key" : "/root/.config/lxc/client.key",
+          remote_addr" : "https://srv01:8443"
+          cert" : "/root/.config/lxc/client.crt"
+          key" : "/root/.config/lxc/client.key"
           verify_cert" : False
 
 A remote we try to authenticate to
@@ -181,10 +200,10 @@ A remote we try to authenticate to
     lxd:
       remotes:
         srv02:
-          remote_addr" : "https://srv02:8443",
-          cert" : "/root/.config/lxc/client.crt",
-          key" : "/root/.config/lxc/client.key",
-          verify_cert" : False,
+          remote_addr" : "https://srv02:8443"
+          cert" : "/root/.config/lxc/client.crt"
+          key" : "/root/.config/lxc/client.key"
+          verify_cert" : False
           password" : "PaSsW0rD"
 
 .. attention::
@@ -263,7 +282,7 @@ A local profile that adds a interface
               eth1:
                 type: "nic"
                 nictype": "bridged"
-                parent": "br0"
+                parent": "br1"
 
 
 A local profile that adds a shared mount point
@@ -348,6 +367,77 @@ Manages LXD images.
 ------------------
 
 Manages LXD containers, this includes `lxd.images`, `lxd.profiles` and `lxd.remotes`.
+
+
+To create a container and start it
+++++++++++++++++++++++++++++++++++
+
+From the image alias "xenial/amd64"
+
+.. code-block:: yaml
+
+    lxd:
+      containers:
+        local:
+          ubuntu-xenial:
+            running: True
+            source: xenial/amd64
+
+
+Same with the profiles "default" and "autostart"
+++++++++++++++++++++++++++++++++++++++++++++++++
+
+We also add a higher start priority and a device eth1
+
+.. code-block:: yaml
+
+    lxd:
+      containers:
+        local:
+          ubuntu-xenial2:
+            running: True
+            source: xenial/amd64
+            profiles:
+              - default
+              - autostart
+            config:
+              boot.autostart.priority: 1000
+            devices:
+              eth1:
+                type: "nic"
+                nictype": "bridged"
+                parent": "br1"
+            opts:
+              - require:
+                - lxd_profile: lxd_profile_local_autostart
+
+
+Later you might want migrate "ubuntu-xenial" to "srv01"
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+.. code-block:: yaml
+
+    lxd:
+      containers:
+        srv01:
+          ubuntu-xenial:
+            migrated: True
+            stop_and_start: True    # No live-migration but start/stop.
+            source: local       # Note that we've overwritten "local",
+                                # else this wont work!
+
+
+And finaly send it to /dev/null
++++++++++++++++++++++++++++++++
+
+.. code-block:: yaml
+
+    lxd:
+      containers:
+        srv01:
+          ubuntu-xenial:
+            absent: True
+            stop: True
 
 
 LXD execution Module

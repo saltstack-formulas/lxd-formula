@@ -9,15 +9,12 @@ include:
   - lxd.remotes
 
 {% for remotename, profiles in datamap.profiles.items() %}
-    {%- set remote = False %}
-    {%- if remotename != 'local' %}
-        {%- set remote = datamap.remotes.get(remotename, False) %}
-    {%- endif %}
+    {%- set remote = datamap.remotes.get(remotename, False) %}
 
-    {% for name, profile in profiles.items() %}
+    {%- for name, profile in profiles.items() %}
 lxd_profile_{{ remotename }}_{{ name }}:
   lxd_profile:
-    - name: {{ name }}
+    - name: "{{ name }}"
         {%- if profile.get('absent', False) %}
     - absent
         {%- else %}
@@ -41,6 +38,9 @@ lxd_profile_{{ remotename }}_{{ name }}:
     - require:
       - lxd: lxd_remote_{{ remotename }}
             {%- endif %}
+        {%- endif %}
+        {%- if 'opts' in profile %}
+    {{ sls_block(profile.opts )}}
         {%- endif %}
     {%- endfor %}
 {%- endfor %}
