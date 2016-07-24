@@ -8,8 +8,10 @@
   'lookup': salt['grains.filter_by']({
     'Debian': {
       'lxd': {
+        'packages': "criu is required for live migrations.",
         'packages': [
-          'lxd'
+          'lxd',
+          'criu'
         ]
       },
 
