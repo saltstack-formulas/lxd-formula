@@ -25,6 +25,7 @@ Before we forget it, `LXD`_ and this formula allows you to
 TODOS
 =====
 
+- Document every piece of code.
 - Add support for image_copy to PyLXD and this module.
 - Add the `lxd_image` state.
 - Add suppport for file pull/push (with salt:// support).
