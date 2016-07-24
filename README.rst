@@ -22,14 +22,22 @@ Before we forget it, `LXD`_ and this formula allows you to
 .. _LXD: https://linuxcontainers.org/lxd/
 
 
+TODOS
+=====
+
+- Add support for image_copy to PyLXD and this module.
+- Add the `lxd_image` state.
+- Add suppport for file pull/push (with salt:// support).
+
+
 Requirements
 ============
 
 - This has been tested with Saltstack `2016.3.1`, we don't know if it
   works with other versions.
-- pcdummy's version of `pylxd`_.
+- pcdummy's version of `PyLXD`_.
 
-.. _pylxd: https://github.com/pcdummy/pylxd
+.. _PyLXD: https://github.com/pcdummy/pylxd
 
 Installation
 ============
@@ -157,10 +165,6 @@ to create profiles/images/containers on remote LXD instances.
 
 .. attention::
 
-    It will connect to the lxd daemon(s) every time you run this state if 'password' has been given for a remote.
-
-.. attention::
-
     Migrations and image copies don't work with provided "local" endpoint, overwrite it if you want to migrate from/to local.
 
 Overwrite **local**:
@@ -206,10 +210,6 @@ A remote we try to authenticate to
           key" : "/root/.config/lxc/client.key"
           verify_cert" : False
           password" : "PaSsW0rD"
-
-.. attention::
-
-    It will connect to the lxd daemon srv02 every time you run this state.
 
 
 ``lxd.profiles``
