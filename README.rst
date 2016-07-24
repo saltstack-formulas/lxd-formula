@@ -27,8 +27,9 @@ Requirements
 
 - This has been tested with Saltstack `2016.3.1`, we don't know if it
   works with other versions.
-- pylxd >= 2.0.3 from pip
+- pcdummy's version of `pylxd`_.
 
+.. _pylxd: https://github.com/pcdummy/pylxd
 
 Installation
 ============
@@ -408,7 +409,7 @@ We also add a higher start priority and a device eth1
                 nictype": "bridged"
                 parent": "br1"
             opts:
-              - require:
+              require:
                 - lxd_profile: lxd_profile_local_autostart
 
 
