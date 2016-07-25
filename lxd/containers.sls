@@ -6,6 +6,7 @@
 
 include:
   - lxd.python
+  - lxd.remotes
   - lxd.profiles
   - lxd.images
 
