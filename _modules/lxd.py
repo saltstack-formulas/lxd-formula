@@ -475,7 +475,7 @@ def container_list(list_names=False, remote_addr=None,
     if list_names:
         return [c.name for c in containers]
 
-    return [_dict_update(c.marshall(), {'name': c.name}) for c in containers]
+    return [c.dict() for c in containers]
 
 
 def container_create(name, source, profiles=['default'],
@@ -508,9 +508,6 @@ def container_create(name, source, profiles=['default'],
     if isinstance(source, six.string_types):
         source = {'type': 'image', 'alias': source}
 
-    import pprint; pprint.pprint(source)
-    pprint.pprint(profiles)
-
     config, devices, normalize_input_values(
         config,
         devices
@@ -539,7 +536,7 @@ def container_create(name, source, profiles=['default'],
     if _raw:
         return container
 
-    return _dict_update(container.marshall(), {'name': container.name})
+    return container.dict()
 
 
 def container_get(name, remote_addr=None,
@@ -568,7 +565,7 @@ def container_get(name, remote_addr=None,
     if _raw:
         return container
 
-    return _dict_update(container.marshall(), {'name': container.name})
+    return container.dict()
 
 
 def container_delete(name, remote_addr=None,
@@ -591,10 +588,7 @@ def container_rename(name, newname, remote_addr=None,
             "Can't rename the running container '{0}'.".format(name)
         )
 
-    return _dict_update(
-        container.rename(newname, wait=True).marshall(),
-        {'name': container.name}
-    )
+    return container.rename(newname, wait=True).dict()
 
 
 def container_start(name, remote_addr=None,
@@ -605,10 +599,7 @@ def container_start(name, remote_addr=None,
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
-    return _dict_update(
-        container.start(wait=True).marshall(),
-        {'name': container.name}
-    )
+    return container.start(wait=True).dict()
 
 
 def container_stop(name, timeout=30, force=True, remote_addr=None,
@@ -619,10 +610,7 @@ def container_stop(name, timeout=30, force=True, remote_addr=None,
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
-    return _dict_update(
-        container.stop(timeout, force, wait=True).marshall(),
-        {'name': container.name}
-    )
+    return container.stop(timeout, force, wait=True).dict()
 
 
 def container_restart(name, remote_addr=None,
@@ -630,10 +618,7 @@ def container_restart(name, remote_addr=None,
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
-    return _dict_update(
-        container.restart(wait=True).marshall(),
-        {'name': container.name}
-    )
+    return container.restart(wait=True).dict()
 
 
 def container_freeze(name, remote_addr=None,
@@ -644,10 +629,7 @@ def container_freeze(name, remote_addr=None,
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
-    return _dict_update(
-        container.freeze(wait=True).marshall(),
-        {'name': container.name}
-    )
+    return container.freeze(wait=True).dict()
 
 
 def container_unfreeze(name, remote_addr=None,
@@ -658,10 +640,7 @@ def container_unfreeze(name, remote_addr=None,
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
-    return _dict_update(
-        container.unfreeze(wait=True).marshall(),
-        {'name': container.name}
-    )
+    return container.unfreeze(wait=True).dict()
 
 
 def container_migrate(name,
@@ -735,10 +714,7 @@ def container_migrate(name,
     if stop_and_start and was_running:
         dest_container.start(wait=True)
 
-    return _dict_update(
-        dest_container.marshall(),
-        {'name': container.name}
-    )
+    return dest_container.dict()
 
 
 def container_config_get(name, config_key, remote_addr=None,
@@ -866,7 +842,7 @@ def profile_list(list_names=False, remote_addr=None,
     if list_names:
         return [p.name for p in profiles]
 
-    return [_dict_update(p.marshall(), {'name': p.name}) for p in profiles]
+    return [p.dict() for p in profiles]
 
 
 def profile_create(name, config=None, devices=None, description=None,
@@ -918,7 +894,7 @@ def profile_create(name, config=None, devices=None, description=None,
         profile.description = description
         pylxd_save_object(profile)
 
-    return _dict_update(profile.marshall(), {'name': profile.name})
+    return profile.dict()
 
 
 def profile_get(name, remote_addr=None,
@@ -953,7 +929,7 @@ def profile_get(name, remote_addr=None,
     if _raw:
         return profile
 
-    return _dict_update(profile.marshall(), {'name': profile.name})
+    return profile.dict()
 
 
 def profile_delete(name, remote_addr=None,
@@ -1223,7 +1199,7 @@ def image_list(list_aliases=False, remote_addr=None,
     if list_aliases:
         return {i.fingerprint: [a['name'] for a in i.aliases] for i in images}
 
-    return [i.marshall() for i in images]
+    return [i.dict() for i in images]
 
 
 '''
@@ -1263,7 +1239,7 @@ def image_copy(source, wait=True, remote_addr=None,
     if not wait:
         return image.json()['operation']
 
-    return image.marshall()
+    return image.dict()
 '''
 
 
@@ -1497,7 +1473,7 @@ def _set_property_dict_item(obj, prop, key, value):
 
     pylxd_save_object(obj)
 
-    return _dict_update(obj.marshall(), {'name': obj.name})
+    return obj.dict()
 
 
 def _get_property_dict_item(obj, prop, key):
@@ -1521,11 +1497,3 @@ def _delete_property_dict_item(obj, prop, key):
     pylxd_save_object(obj)
 
     return True
-
-
-def _dict_update(a, b):
-    ''' A simple helper that calls update AND returns
-        the updated object.
-    '''
-    a.update(b)
-    return a
