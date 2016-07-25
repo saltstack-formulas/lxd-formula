@@ -14,7 +14,11 @@ include:
     {%- for name, profile in profiles.items() %}
 lxd_profile_{{ remotename }}_{{ name }}:
   lxd_profile:
+    {%- if 'name' in profile %}
+    - name: "{{ profile['name'] }}"
+    {%- else %}
     - name: "{{ name }}"
+    {%- endif %}
         {%- if profile.get('absent', False) %}
     - absent
         {%- else %}

@@ -46,6 +46,7 @@ import salt.ext.six as six
 # Import 3rd-party libs
 try:
     import pylxd
+    import pylxd.image
     PYLXD_AVAILABLE = True
 except ImportError:
     PYLXD_AVAILABLE = False
@@ -324,6 +325,7 @@ def pylxd_client_get(remote_addr=None, cert=None, key=None, verify_cert=True):
 
     try:
         if remote_addr is None:
+            log.debug('Trying to connect to the local unix socket')
             client = pylxd.Client()
         else:
             if remote_addr.startswith('/'):
@@ -354,6 +356,12 @@ def pylxd_client_get(remote_addr=None, cert=None, key=None, verify_cert=True):
                         )
                     )
 
+                log.debug((
+                    'Trying to connecto to "{0}" '
+                    'with cert "{1}", key "{2}" and '
+                    'verify_cert "{3!s}"'.format(
+                        remote_addr, cert, key, verify_cert)
+                ))
                 client = pylxd.Client(
                     endpoint=remote_addr,
                     cert=(cert, key,),
@@ -549,8 +557,30 @@ def container_get(name, remote_addr=None,
         name :
             The name of the container to get.
 
-        remote_addr, cert, key, verify_cert:
-            See pylxd_client_get
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
 
         _raw :
             Return the pylxd object, this is internal and by states in use.
@@ -672,6 +702,31 @@ def container_migrate(name,
         stop_and_start :
             Stop the container on the source and start it on dest
 
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
+
         CLI Example:
 
         .. code-block:: bash
@@ -789,6 +844,7 @@ def container_file_put(name, src, dst, recurse=False, remove_existing=False,
                        cert=None, key=None, verify_cert=True):
     ''' TODO: This is a WIP.
     '''
+    raise NotImplementedError()
     src = os.path.expanduser(src)
 
     if not os.path.isabs(src):
@@ -810,10 +866,12 @@ def container_file_put(name, src, dst, recurse=False, remove_existing=False,
         pass
 
 
+
 def container_file_get(name, src, dst, remote_addr=None,
                        cert=None, key=None, verify_cert=True):
     ''' TODO: This is a WIP.
     '''
+    raise NotImplementedError()
     dst = os.path.expanduser(dst)
 
 
@@ -828,8 +886,30 @@ def profile_list(list_names=False, remote_addr=None,
 
             Return a list of names instead of full blown dicts.
 
-        remote_addr, cert, key, verify_cert:
-            See pylxd_client_get
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
 
         CLI Examples:
 
@@ -869,8 +949,30 @@ def profile_create(name, config=None, devices=None, description=None,
         description :
             A description string or None (None = unset).
 
-        remote_addr, cert, key, verify_cert:
-            See pylxd_client_get
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
 
         CLI Examples:
 
@@ -907,8 +1009,30 @@ def profile_get(name, remote_addr=None,
         name :
             The name of the profile to get.
 
-        remote_addr, cert, key, verify_cert:
-            See pylxd_client_get
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
 
         _raw :
             Return the pylxd object, this is internal and by states in use.
@@ -942,8 +1066,30 @@ def profile_delete(name, remote_addr=None,
         name :
             The name of the profile to delete.
 
-        remote_addr, cert, key, verify_cert:
-            See pylxd_client_get
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
 
         CLI Example:
 
@@ -974,8 +1120,30 @@ def profile_config_get(name, config_key, remote_addr=None,
         config_key :
             The key for the item to retrieve.
 
-        remote_addr, cert, key, verify_cert:
-            See pylxd_client_get
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
 
         CLI Example:
 
@@ -1009,8 +1177,30 @@ def profile_config_set(name, config_key, config_value,
         config_value :
             Its items value.
 
-        remote_addr, cert, key, verify_cert:
-            See pylxd_client_get
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
 
         CLI Example:
 
@@ -1042,8 +1232,30 @@ def profile_config_delete(name, config_key, remote_addr=None,
         config_key :
             The config key for the value to retrieve.
 
-        remote_addr, cert, key, verify_cert:
-            See pylxd_client_get
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
 
         CLI Example:
 
@@ -1075,8 +1287,30 @@ def profile_device_get(name, device_name, remote_addr=None,
         device_name :
             The name of the device to retrieve.
 
-        remote_addr, cert, key, verify_cert:
-            See pylxd_client_get
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
 
         CLI Example:
 
@@ -1108,8 +1342,30 @@ def profile_device_set(name, device_name, device_type='disk',
         device_name :
             The name of the device to set.
 
-        remote_addr, cert, key, verify_cert:
-            See pylxd_client_get
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
 
         CLI Example:
 
@@ -1148,8 +1404,30 @@ def profile_device_delete(name, device_name, remote_addr=None,
         device_name :
             The name of the device to delete.
 
-        remote_addr, cert, key, verify_cert:
-            See pylxd_client_get
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
 
         CLI Example:
 
@@ -1186,15 +1464,37 @@ def image_list(list_aliases=False, remote_addr=None,
             Return a dict with the fingerprint as key and
             a list of aliases as value instead.
 
-        remote_addr, cert, key, verify_cert:
-            See pylxd_client_get
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
 
         CLI Examples:
 
         .. code-block:: bash
 
-            salt '*' lxd.image_list true --out=json
-            salt '*' lxd.image_list --out=json
+            $ salt '*' lxd.image_list true --out=json
+            $ salt '*' lxd.image_list --out=json
     '''
     client = pylxd_client_get(remote_addr, cert, key, verify_cert)
 
@@ -1205,45 +1505,542 @@ def image_list(list_aliases=False, remote_addr=None,
     return [i.dict() for i in images]
 
 
-'''
-# This needs pcdummy's version of pylxd.
-def image_copy(source, wait=True, remote_addr=None,
-               cert=None, key=None, verify_cert=True, **kwargs):
-    ''
+def image_get(fingerprint,
+              remote_addr=None,
+              cert=None,
+              key=None,
+              verify_cert=True,
+              _raw=False):
+    ''' Get an image by its fingerprint
+
+        fingerprint :
+            The fingerprint of the image to retrieve
+
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
+
+        _raw : False
+            Return the raw pylxd object or a dict of it?
+
+        CLI Examples:
+
+        ..code-block:: bash
+
+            $ salt '*' lxd.image_get <fingerprint>
+    '''
+    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+
+    image = None
+    try:
+        image = client.images.get(fingerprint)
+    except pylxd.exceptions.LXDAPIException:
+        raise SaltInvocationError(
+            'Image with fingerprint \'{0}\' not found'.format(fingerprint)
+        )
+
+    if _raw:
+        return image
+
+    return image.dict()
+
+
+def image_get_by_alias(alias,
+                       remote_addr=None,
+                       cert=None,
+                       key=None,
+                       verify_cert=True,
+                       _raw=False):
+    ''' Get an image by an alias
+
+        alias :
+            The alias of the image to retrieve
+
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
+
+        _raw : False
+            Return the raw pylxd object or a dict of it?
+
+        CLI Examples:
+
+        ..code-block:: bash
+
+            $ salt '*' lxd.image_get_by_alias xenial/amd64
+    '''
+    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+
+    image = None
+    try:
+        image = client.images.get_by_alias(alias)
+    except pylxd.exceptions.LXDAPIException:
+        raise SaltInvocationError(
+            'Image with alias \'{0}\' not found'.format(alias)
+        )
+
+    if _raw:
+        return image
+
+    return image.dict()
+
+
+def image_delete(name,
+                 remote_addr=None,
+                 cert=None,
+                 key=None,
+                 verify_cert=True):
+    ''' Delete an image by an alias or fingerprint
+
+        name :
+            The alias or fingerprint of the image to delete,
+            can be a obj for the states.
+
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
+
+        CLI Examples:
+
+        ..code-block:: bash
+
+            $ salt '*' lxd.image_delete xenial/amd64
+    '''
+
+    # This will fail with a SaltInvocationError if
+    # the image doesn't exists and with a CommandExecutionError
+    # on connection problems.
+    if not isinstance(name, pylxd.image.Image):
+        image = None
+        try:
+            image = image_get_by_alias(
+                name, remote_addr, cert,
+                key, verify_cert, _raw=True
+            )
+        except SaltInvocationError:
+            image = image_get(
+                name, remote_addr, cert,
+                key, verify_cert, _raw=True
+            )
+    else:
+        image = name
+
+    image.delete()
+    return True
+
+
+def image_from_file(filename,
+                    remote_addr=None,
+                    cert=None,
+                    key=None,
+                    verify_cert=True,
+                    aliases=[],
+                    public=False,
+                    saltenv='base',
+                    _raw=False):
+    ''' Create an image from a file
+
+        filename :
+            The filename of the rootfs
+
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
+
+        aliases : []
+            List of aliases to append to the copied image
+
+        public : False
+            Make this image public available
+
+        saltenv : base
+            The saltenv to use for salt:// copies
+
+        _raw : False
+            Return the raw pylxd object or a dict of the image?
+
+        CLI Examples:
+
+        ..code-block:: bash
+
+            $ salt '*' lxd.image_from_file salt://lxd/files/busybox.tar.xz aliases=["busybox-amd64"]
+
+        # noqa
+    '''
+    cached_file = __salt__['cp.cache_file'](filename, saltenv=saltenv)
+    data = b''
+    with open(cached_file, 'r+b') as fp:
+        data = fp.read()
+
+    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    image = client.images.create(data, public, wait=True)
+
+    # Aliases support
+    for alias in aliases:
+        image_alias_add(image, alias)
+
+    if _raw:
+        return image
+
+    return image.dict()
+
+
+def image_copy_lxd(source,
+                   src_remote_addr,
+                   src_cert,
+                   src_key,
+                   src_verify_cert,
+                   remote_addr,
+                   cert,
+                   key,
+                   verify_cert=True,
+                   aliases=[],
+                   public=None,
+                   auto_update=None,
+                   _raw=False):
+    ''' Copy an image from another LXD instance
+
+    source :
+        An alias or a fingerprint of the source.
+
+    src_remote_addr :
+        An URL to the source remote daemon
+
+        Examples:
+            https://mysourceserver.lan:8443
+
+    src_cert :
+        PEM Formatted SSL Zertifikate for the source
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    src_key :
+        PEM Formatted SSL Key for the source
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    src_verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+
+    remote_addr :
+        Address of the destination daemon
+
+        Examples:
+            https://mydestserver.lan:8443
+
+    cert :
+        PEM Formatted SSL Zertifikate for the destination
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key for the destination
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+
+    aliases : []
+        List of aliases to append to the copied image
+
+    public : None
+        Make this image public available, None = copy source
+
+    auto_update : None
+        Wherever to auto-update from the original source, None = copy source
+
+    _raw : False
+        Return the raw pylxd object or a dict of the destination image?
+
+    CLI Examples:
+
+    .. code-block:: bash
+
+        $ salt '*' lxd.image_copy_lxd xenial/amd64 https://srv01:8443 ~/.config/lxc/client.crt ~/.config/lxc/client.key false https://srv02:8443 ~/.config/lxc/client.crt ~/.config/lxc/client.key false aliases="['xenial/amd64']"
+
+    # noqa
+    '''
+
+    log.debug(
+        'Trying to copy the image "{0}" from "{1}" to "{2}"'.format(
+            source, src_remote_addr, remote_addr
+        )
+    )
+
+    # This will fail with a SaltInvocationError if
+    # the image doesn't exists on the source and with a CommandExecutionError
+    # on connection problems.
+    src_image = None
+    try:
+        src_image = image_get_by_alias(
+            source, src_remote_addr, src_cert,
+            src_key, src_verify_cert, _raw=True
+        )
+    except SaltInvocationError:
+        src_image = image_get(
+            source, src_remote_addr, src_cert,
+            src_key, src_verify_cert, _raw=True
+        )
+
+    # Will fail with a CommandExecutionError on connection problems.
+    dest_client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+
+    dest_image = src_image.copy_to_lxd(
+        dest_client, public=public, auto_update=auto_update, wait=True
+    )
+
+    # Aliases support
+    for alias in aliases:
+        image_alias_add(dest_image, alias)
+
+    if _raw:
+        return dest_image
+
+    return dest_image.dict()
+
+
+def image_alias_add(image,
+                    alias,
+                    description='',
+                    remote_addr=None,
+                    cert=None,
+                    key=None,
+                    verify_cert=True):
+    ''' Create an alias on the given image
+
+        image :
+            An image alias, a fingerprint or a image object
+
+        alias :
+            The alias to add
+
+        description :
+            Description of the alias
+
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
 
         CLI Examples:
 
         .. code-block:: bash
 
-            salt-call lxd.image_copy "{type: 'image', mode: 'pull', server: 'https://srv01:8443', fingerprint: 'f452cda3bccb2903e56d53e402b9d35334b4276783d098a879be5d74b04e62e2', certificate: '-----BEGIN CERTIFICATE-----MIIGED-----END CERTIFICATE-----'}" true auto_update=true filename=ubuntu-16.04-server-cloudimg-amd64-lxd.tar.xz
+            $ salt '*' lxd.image_alias_add xenial/amd64 x "Short version of xenial/amd64"
 
-        You need to provide a certificate for private images.
-        See: https://github.com/lxc/lxd/blob/3207c2c67d02b3c7504c118f9af6262747103d65/doc/rest-api.md#post-6
+        # noqa
+    '''
+    if not isinstance(image, pylxd.image.Image):
+        name = image
 
-    # noqa
-    ''
-    if not isinstance(source, dict):
-        raise SaltInvocationError('Argument source must be a dict')
-
-    if 'fingerprint' not in source:
-        raise SaltInvocationError(
-            'pylxd requires a fingerprint for the source'
-        )
-
-    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+        # This will fail with a SaltInvocationError if
+        # the image doesn't exists on the source and with a
+        # CommandExecutionError on connection problems.
+        image = None
+        try:
+            image = image_get_by_alias(
+                name, remote_addr, cert,
+                key, verify_cert, _raw=True
+            )
+        except SaltInvocationError:
+            image = image_get(
+                name, remote_addr, cert,
+                key, verify_cert, _raw=True
+            )
 
     try:
-        image = client.images.copy(source, wait, **kwargs)
-    except pylxd.exceptions.LXDAPIException as e:
-        raise CommandExecutionError(
-            'Failed to copy the image, error was: {0}'.format(str(e))
-        )
+        image.delete_alias(alias)
+    except pylxd.exceptions.LXDAPIException:
+        pass
+    image.add_alias(alias, description)
 
-    if not wait:
-        return image.json()['operation']
+    return True
 
-    return image.dict()
-'''
+
+def image_alias_delete(image,
+                       alias,
+                       remote_addr=None,
+                       cert=None,
+                       key=None,
+                       verify_cert=True):
+    ''' Delete an alias (this is currently not restricted to the image)
+
+        image :
+            An image alias, a fingerprint or a image object
+
+        alias :
+            The alias to delete
+
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
+
+        CLI Examples:
+
+        .. code-block:: bash
+
+            $ salt '*' lxd.image_alias_add xenial/amd64 x "Short version of xenial/amd64"
+
+        # noqa
+    '''
+    if not isinstance(image, pylxd.image.Image):
+        name = image
+
+        # This will fail with a SaltInvocationError if
+        # the image doesn't exists on the source and with a
+        # CommandExecutionError on connection problems.
+        image = None
+        try:
+            image = image_get_by_alias(
+                name, remote_addr, cert,
+                key, verify_cert, _raw=True
+            )
+        except SaltInvocationError:
+            image = image_get(
+                name, remote_addr, cert,
+                key, verify_cert, _raw=True
+            )
+
+    try:
+        image.delete_alias(alias)
+    except pylxd.exceptions.LXDAPIException:
+        return False
+
+    return True
 
 
 ################

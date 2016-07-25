@@ -252,7 +252,7 @@ def absent(name, remote_addr=None, cert=None,
             return _error(ret, str(e))
         except SaltInvocationError as e:
             # Profile not found
-            return _unchanged(ret, 'Profile "{0}" not found.'.format(name))
+            return _success(ret, 'Profile "{0}" not found.'.format(name))
 
         ret['changes'] = {
             'removed':

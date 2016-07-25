@@ -36,10 +36,6 @@ import os.path
 from salt.exceptions import CommandExecutionError
 from salt.exceptions import SaltInvocationError
 
-# Set up logging
-import logging
-log = logging.getLogger(__name__)
-
 __docformat__ = 'restructuredtext en'
 
 # PEP8

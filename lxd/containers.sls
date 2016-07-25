@@ -17,7 +17,11 @@ include:
       {%- if 'migrated' not in container and 'absent' not in container %}
 lxd_container_{{ remotename }}_{{ name }}:
   lxd_container.present:
+    {%- if 'name' in container %}
+    - name: "{{ container['name'] }}"
+    {%- else %}
     - name: "{{ name }}"
+    {%- endif %}
         {%- if 'running' in container %}
     - running: {{ container.running }}
         {%- endif %}

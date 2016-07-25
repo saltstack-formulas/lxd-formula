@@ -26,9 +26,8 @@ TODOS
 =====
 
 - Document every piece of code.
-- Add support for image_copy to PyLXD and this module.
-- Add the `lxd_image` state.
 - Add suppport for file pull/push (with salt:// support).
+- Add support for container_exec.
 
 
 Requirements
@@ -363,6 +362,46 @@ To remove a profile
 --------------
 
 Manages LXD images.
+
+To create an image from file on host 'local'
+++++++++++++++++++++++++++++++++++++++++++++
+
+.. code-block:: yaml
+
+    lxd:
+      images:
+        local:
+          busybox:
+            name: busybox     # Its alias
+            source:
+              type: file
+              filename: salt://lxd/files/busybox.tar.xz
+              saltenv: base
+
+
+To create an image from the provided "images" remote
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+On `images.linuxcontainers.org`_ you see a list of images available.
+
+.. _images.linuxcontainers.org: http://images.linuxcontainers.org/
+
+And with "lxc image list images:" you get a list of aliases.
+
+.. code-block:: yaml
+
+    lxd:
+      images:
+        local:
+          xenial_amd64:
+            name: xenial/amd64    # Its alias
+            source:
+              type: lxd
+              name: ubuntu/xenial/amd64
+              remote: images_linuxcontainers_org    # See map.jinja for it
+            aliases: ['x', 'xa64']  # More aliases
+            public: False
+            auto_update: True
 
 
 ``lxd.containers``
