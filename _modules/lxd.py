@@ -311,7 +311,10 @@ def pylxd_client_get(remote_addr=None, cert=None, key=None, verify_cert=True):
     # noqa
     '''
 
-    pool_key = '|'.join((remote_addr, cert, key, six.text_type(verify_cert),))
+    pool_key = '|'.join((six.text_type(remote_addr),
+                         six.text_type(cert),
+                         six.text_type(key),
+                         six.text_type(verify_cert),))
 
     if pool_key in _connection_pool:
         log.debug((
