@@ -486,7 +486,7 @@ def container_list(list_names=False, remote_addr=None,
     if list_names:
         return [c.name for c in containers]
 
-    return [c.dict() for c in containers]
+    return map(_pylxd_model_to_dict, containers)
 
 
 def container_create(name, source, profiles=['default'],
@@ -547,7 +547,7 @@ def container_create(name, source, profiles=['default'],
     if _raw:
         return container
 
-    return container.dict()
+    return _pylxd_model_to_dict(container)
 
 
 def container_get(name, remote_addr=None,
@@ -598,7 +598,7 @@ def container_get(name, remote_addr=None,
     if _raw:
         return container
 
-    return container.dict()
+    return _pylxd_model_to_dict(container)
 
 
 def container_delete(name, remote_addr=None,
@@ -621,7 +621,8 @@ def container_rename(name, newname, remote_addr=None,
             "Can't rename the running container '{0}'.".format(name)
         )
 
-    return container.rename(newname, wait=True).dict()
+    container.rename(newname, wait=True)
+    return _pylxd_model_to_dict(container)
 
 
 def container_start(name, remote_addr=None,
@@ -632,7 +633,8 @@ def container_start(name, remote_addr=None,
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
-    return container.start(wait=True).dict()
+    container.start(wait=True)
+    return _pylxd_model_to_dict(container)
 
 
 def container_stop(name, timeout=30, force=True, remote_addr=None,
@@ -643,7 +645,8 @@ def container_stop(name, timeout=30, force=True, remote_addr=None,
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
-    return container.stop(timeout, force, wait=True).dict()
+    container.stop(timeout, force, wait=True)
+    return _pylxd_model_to_dict(container)
 
 
 def container_restart(name, remote_addr=None,
@@ -651,7 +654,8 @@ def container_restart(name, remote_addr=None,
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
-    return container.restart(wait=True).dict()
+    container.restart(wait=True)
+    return _pylxd_model_to_dict(container)
 
 
 def container_freeze(name, remote_addr=None,
@@ -662,7 +666,8 @@ def container_freeze(name, remote_addr=None,
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
-    return container.freeze(wait=True).dict()
+    container.freeze(wait=True)
+    return _pylxd_model_to_dict(container)
 
 
 def container_unfreeze(name, remote_addr=None,
@@ -673,7 +678,8 @@ def container_unfreeze(name, remote_addr=None,
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
-    return container.unfreeze(wait=True).dict()
+    container.unfreeze(wait=True)
+    return _pylxd_model_to_dict(container)
 
 
 def container_migrate(name,
@@ -772,7 +778,7 @@ def container_migrate(name,
     if stop_and_start and was_running:
         dest_container.start(wait=True)
 
-    return dest_container.dict()
+    return _pylxd_model_to_dict(dest_container)
 
 
 def container_config_get(name, config_key, remote_addr=None,
@@ -866,7 +872,6 @@ def container_file_put(name, src, dst, recurse=False, remove_existing=False,
         pass
 
 
-
 def container_file_get(name, src, dst, remote_addr=None,
                        cert=None, key=None, verify_cert=True):
     ''' TODO: This is a WIP.
@@ -925,7 +930,7 @@ def profile_list(list_names=False, remote_addr=None,
     if list_names:
         return [p.name for p in profiles]
 
-    return [p.dict() for p in profiles]
+    return map(_pylxd_model_to_dict, profiles)
 
 
 def profile_create(name, config=None, devices=None, description=None,
@@ -999,7 +1004,7 @@ def profile_create(name, config=None, devices=None, description=None,
         profile.description = description
         pylxd_save_object(profile)
 
-    return profile.dict()
+    return _pylxd_model_to_dict(profile)
 
 
 def profile_get(name, remote_addr=None,
@@ -1056,7 +1061,7 @@ def profile_get(name, remote_addr=None,
     if _raw:
         return profile
 
-    return profile.dict()
+    return _pylxd_model_to_dict(profile)
 
 
 def profile_delete(name, remote_addr=None,
@@ -1502,7 +1507,7 @@ def image_list(list_aliases=False, remote_addr=None,
     if list_aliases:
         return {i.fingerprint: [a['name'] for a in i.aliases] for i in images}
 
-    return [i.dict() for i in images]
+    return map(_pylxd_model_to_dict, images)
 
 
 def image_get(fingerprint,
@@ -1563,7 +1568,7 @@ def image_get(fingerprint,
     if _raw:
         return image
 
-    return image.dict()
+    return _pylxd_model_to_dict(image)
 
 
 def image_get_by_alias(alias,
@@ -1624,7 +1629,7 @@ def image_get_by_alias(alias,
     if _raw:
         return image
 
-    return image.dict()
+    return _pylxd_model_to_dict(image)
 
 
 def image_delete(name,
@@ -1766,7 +1771,7 @@ def image_from_file(filename,
     if _raw:
         return image
 
-    return image.dict()
+    return _pylxd_model_to_dict(image)
 
 
 def image_copy_lxd(source,
@@ -1889,7 +1894,7 @@ def image_copy_lxd(source,
     if _raw:
         return dest_image
 
-    return dest_image.dict()
+    return _pylxd_model_to_dict(dest_image)
 
 
 def image_alias_add(image,
@@ -2273,7 +2278,7 @@ def _set_property_dict_item(obj, prop, key, value):
 
     pylxd_save_object(obj)
 
-    return obj.dict()
+    return _pylxd_model_to_dict(obj)
 
 
 def _get_property_dict_item(obj, prop, key):
@@ -2297,3 +2302,12 @@ def _delete_property_dict_item(obj, prop, key):
     pylxd_save_object(obj)
 
     return True
+
+
+def _pylxd_model_to_dict(obj):
+    """Translates a plyxd model object to a dict"""
+    marshalled = {}
+    for key, val in obj.__attributes__.items():
+        if hasattr(obj, key):
+            marshalled[key] = getattr(obj, key)
+    return marshalled
