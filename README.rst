@@ -5,15 +5,13 @@ LXD
 `LXD`_ is a container "hypervisor". This formulas provides
 several states to help manage it and its containers.
 
-This is currently a **WIP**.
-
 This formula will allow you to:
 
 - Initialize LXD with storage, authentication and network settings.
 - Create some default settings for containers (profiles).
 - Pull an image from various sources.
 - Create a container with an image.
-- Start/Stop/Restart/Freeze/Unfreeze a container.
+- Start/Stop/Restart/Freeze/Unfreeze/Migrate a container.
 - And finaly undo all of the above.
 
 Before we forget it, `LXD`_ and this formula allows you to
@@ -33,6 +31,8 @@ TODOS
 Requirements
 ============
 
+- There are currently only LXD packages for Ubuntu GNU/Linux so for the daemon
+  you need Ubuntu.
 - This has been tested with Saltstack `2016.3.1`, we don't know if it
   works with other versions.
 - pcdummy's version of `PyLXD`_.
