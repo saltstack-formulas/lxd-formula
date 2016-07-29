@@ -34,9 +34,10 @@ Requirements
   you need Ubuntu.
 - This has been tested with Saltstack `2016.3.1`, we don't know if it
   works with other versions.
-- `PyLXD`_ from source.
+- `PyLXD`_ from pcdummy until PR `#169` gets merged.
 
-.. _PyLXD: https://github.com/lxc/pylxd
+.. _PyLXD: https://github.com/pcdummy/pylxd
+.. _#169: https://github.com/lxc/pylxd/pull/169
 
 Installation
 ============
@@ -385,7 +386,7 @@ On `images.linuxcontainers.org`_ you see a list of images available.
 
 .. _images.linuxcontainers.org: http://images.linuxcontainers.org/
 
-And with "lxc image list images:" you get a list of aliases.
+And with ``lxc image list images:`` you get a list of aliases.
 
 .. code-block:: yaml
 
@@ -395,10 +396,51 @@ And with "lxc image list images:" you get a list of aliases.
           xenial_amd64:
             name: xenial/amd64    # Its alias
             source:
-              type: lxd
               name: ubuntu/xenial/amd64
               remote: images_linuxcontainers_org    # See map.jinja for it
             aliases: ['x', 'xa64']  # More aliases
+            public: False
+            auto_update: True
+
+
+To create an image from "simplestreams"
++++++++++++++++++++++++++++++++++++++++
+
+We also implemented a way to copy images from simplestreams, to do so:
+
+.. code-block:: yaml
+
+    lxd:
+      images:
+        local:
+          trusty_amd64:
+            source:
+              name: trusty/amd64
+              remote: ubuntu    # See map.jinja for it
+            aliases: ['t', 'ta64']  # More aliases
+            public: False
+            auto_update: True
+
+Those simplestreams images have cloud-init integrated! Use
+
+    $ lxc image alias list ubuntu:
+
+to get a list of available aliases.
+
+
+To create an image from an URL
+++++++++++++++++++++++++++++++
+
+.. code-block:: yaml
+
+    lxd:
+      images:
+        local:
+          trusty_amd64:
+            source:
+              type: url
+              url: https://dl.stgraber.org/lxd
+            aliases: ['busbox-amd64']  # More aliases
             public: False
             auto_update: True
 

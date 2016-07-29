@@ -78,16 +78,26 @@
   'profiles': {},
   'remotes': {
     'local': {
+      'type': 'lxd',
       'remote_addr': '/var/lib/lxd/unix.socket',
       'cert': '~/.config/lxc/client.crt',
       'key': '~/.config/lxc/client.key',
       'verify_cert': False
     },
     'images_linuxcontainers_org': {
+      'type': 'lxd',
       'remote_addr': 'https://images.linuxcontainers.org',
       'cert': '~/.config/lxc/client.crt',
       'key': '~/.config/lxc/client.key',
       'verify_cert': False
+    },
+    'ubuntu': {
+      'type': 'simplestreams',
+      'server': 'https://cloud-images.ubuntu.com/releases'
+    },
+    'ubuntu_daily': {
+      'type': 'simplestreams',
+      'server': 'https://cloud-images.ubuntu.com/daily'
     }
   },
   'images': {},

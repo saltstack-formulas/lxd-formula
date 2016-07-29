@@ -99,6 +99,23 @@ def present(name,
                 filename: salt://lxd/files/busybox.tar.xz
                 saltenv: base
 
+        From simplestreams:
+
+        .. code-block: yaml
+
+            source:
+                type: simplestreams
+                server: https://cloud-images.ubuntu.com/releases
+                name: xenial/amd64
+
+        From an URL:
+
+        .. code-block: yaml
+
+            source:
+                type: url
+                url: https://dl.stgraber.org/lxd
+
     aliases :
         List of aliases to append, can be empty.
 
@@ -200,6 +217,33 @@ def present(name,
                     aliases=aliases,
                     public=False if public is None else public,
                     saltenv=source['saltenv'],
+                    _raw=True
+                )
+
+            if source['type'] == 'simplestreams':
+                image = __salt__['lxd.image_from_simplestreams'](
+                    source['server'],
+                    source['name'],
+                    remote_addr=remote_addr,
+                    cert=cert,
+                    key=key,
+                    verify_cert=verify_cert,
+                    aliases=aliases,
+                    public=False if public is None else public,
+                    auto_update=False if auto_update is None else auto_update,
+                    _raw=True
+                )
+
+            if source['type'] == 'url':
+                image = __salt__['lxd.image_from_url'](
+                    source['url'],
+                    remote_addr=remote_addr,
+                    cert=cert,
+                    key=key,
+                    verify_cert=verify_cert,
+                    aliases=aliases,
+                    public=False if public is None else public,
+                    auto_update=False if auto_update is None else auto_update,
                     _raw=True
                 )
         except CommandExecutionError as e:

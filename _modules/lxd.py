@@ -2249,6 +2249,156 @@ def image_delete(name,
     return True
 
 
+def image_from_simplestreams(server,
+                             alias,
+                             remote_addr=None,
+                             cert=None,
+                             key=None,
+                             verify_cert=True,
+                             aliases=[],
+                             public=False,
+                             auto_update=False,
+                             _raw=False):
+    ''' Create an image from simplestreams
+
+        server :
+            Simplestreams server URI
+
+        alias :
+            The alias of the image to retrieve
+
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
+
+        aliases : []
+            List of aliases to append to the copied image
+
+        public : False
+            Make this image public available
+
+        auto_update : False
+            Should LXD auto update that image?
+
+        _raw : False
+            Return the raw pylxd object or a dict of the image?
+
+        CLI Examples:
+
+        ..code-block:: bash
+
+            $ salt '*' lxd.image_from_simplestreams "https://cloud-images.ubuntu.com/releases" "trusty/amd64" aliases='["t", "trusty/amd64"]' auto_update=True
+
+        # noqa
+    '''
+    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    image = client.images.create_from_simplestreams(
+        server, alias, public, auto_update
+    )
+
+    # Aliases support
+    for alias in aliases:
+        image_alias_add(image, alias)
+
+    if _raw:
+        return image
+
+    return _pylxd_model_to_dict(image)
+
+
+def image_from_url(url,
+                   remote_addr=None,
+                   cert=None,
+                   key=None,
+                   verify_cert=True,
+                   aliases=[],
+                   public=False,
+                   auto_update=False,
+                   _raw=False):
+    ''' Create an image from an url
+
+        url :
+            The URL from where to download the image
+
+        remote_addr :
+            An URL to a remote Server, you also have to give cert and key if
+            you provide remote_addr and its a TCP Address!
+
+            Examples:
+                https://myserver.lan:8443
+                /var/lib/mysocket.sock
+
+        cert :
+            PEM Formatted SSL Zertifikate.
+
+            Examples:
+                ~/.config/lxc/client.crt
+
+        key :
+            PEM Formatted SSL Key.
+
+            Examples:
+                ~/.config/lxc/client.key
+
+        verify_cert : True
+            Wherever to verify the cert, this is by default True
+            but in the most cases you want to set it off as LXD
+            normaly uses self-signed certificates.
+
+        aliases : []
+            List of aliases to append to the copied image
+
+        public : False
+            Make this image public available
+
+        auto_update : False
+            Should LXD auto update that image?
+
+        _raw : False
+            Return the raw pylxd object or a dict of the image?
+
+        CLI Examples:
+
+        ..code-block:: bash
+
+            $ salt '*' lxd.image_from_url https://dl.stgraber.org/lxd aliases='["busybox-amd64"]'
+
+        # noqa
+    '''
+    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    image = client.images.create_from_url(url, public, auto_update)
+
+    # Aliases support
+    for alias in aliases:
+        image_alias_add(image, alias)
+
+    if _raw:
+        return image
+
+    return _pylxd_model_to_dict(image)
+
+
 def image_from_file(filename,
                     remote_addr=None,
                     cert=None,
