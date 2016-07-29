@@ -23,7 +23,6 @@ Before we forget it, `LXD`_ and this formula allows you to
 TODOS
 =====
 
-- Document every piece of code.
 - Add suppport for file pull/push (with salt:// support).
 - Add support for container_exec.
 
@@ -35,9 +34,9 @@ Requirements
   you need Ubuntu.
 - This has been tested with Saltstack `2016.3.1`, we don't know if it
   works with other versions.
-- pcdummy's version of `PyLXD`_.
+- `PyLXD`_ from source.
 
-.. _PyLXD: https://github.com/pcdummy/pylxd
+.. _PyLXD: https://github.com/lxc/pylxd
 
 Installation
 ============

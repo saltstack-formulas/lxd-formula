@@ -106,6 +106,7 @@ def present(name,
 
 
     profiles : ['default']
+        List of profiles to apply on this container
 
     config :
         A config dict or None (None = unset).

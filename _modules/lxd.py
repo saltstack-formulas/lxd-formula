@@ -227,6 +227,8 @@ def init(storage_backend='dir', trust_password=None, network_address=None,
 @salt.utils.decorators.which('lxc')
 def config_set(key, value):
     '''
+    Set an LXD daemon config option
+
     CLI Examples:
 
     To listen on IPv4 and IPv6 port 8443,
@@ -260,6 +262,19 @@ def config_set(key, value):
 @salt.utils.decorators.which('lxd')
 @salt.utils.decorators.which('lxc')
 def config_get(key):
+    '''
+    Get an LXD daemon config option
+
+    key :
+        The key of the config value to retrieve
+
+    CLI Examples:
+
+    .. code-block:: bash
+
+        salt '*' lxd.config_get core.https_address
+    '''
+
     cmd = 'lxc config get "{0}"'.format(
         key
     )
@@ -387,8 +402,12 @@ def pylxd_client_get(remote_addr=None, cert=None, key=None, verify_cert=True):
 
 def pylxd_save_object(obj):
     ''' Saves an object (profile/image/container) and
-        translate its execpetion on failure.
+        translate its execpetion on failure
 
+    obj :
+        The object to save
+
+    This is an internal method, no CLI Example.
     '''
     try:
         obj.save()
@@ -461,6 +480,35 @@ def authenticate(remote_addr, password, cert, key, verify_cert=True):
 def container_list(list_names=False, remote_addr=None,
                    cert=None, key=None, verify_cert=True):
     '''
+    Lists containers
+
+    list_names : False
+        Only return a list of names when True
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Zertifikate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
 
     CLI Examples:
 
@@ -495,6 +543,89 @@ def container_create(name, source, profiles=['default'],
                      remote_addr=None, cert=None, key=None, verify_cert=True,
                      _raw=False):
     '''
+    Create a container
+
+    name :
+        The name of the container
+
+    source :
+        Can be either a string containing an image alias:
+             "xenial/amd64"
+        or an dict with type "image" with alias:
+            {"type": "image",
+             "alias": "xenial/amd64"}
+        or image with "fingerprint":
+            {"type": "image",
+             "fingerprint": "SHA-256"}
+        or image with "properties":
+            {"type": "image",
+             "properties": {
+                "os": "ubuntu",
+                "release": "14.04",
+                "architecture": "x86_64"
+             }}
+        or none:
+            {"type": "none"}
+        or copy:
+            {"type": "copy",
+             "source": "my-old-container"}
+
+    profiles : ['default']
+        List of profiles to apply on this container
+
+    config :
+        A config dict or None (None = unset).
+
+        Can also be a list:
+            [{'key': 'boot.autostart', 'value': 1},
+             {'key': 'security.privileged', 'value': '1'}]
+
+    devices :
+        A device dict or None (None = unset).
+
+    architecture : 'x86_64'
+        Can be one of the following:
+            * unknown
+            * i686
+            * x86_64
+            * armv7l
+            * aarch64
+            * ppc
+            * ppc64
+            * ppc64le
+            * s390x
+
+    ephemeral : False
+        Destroy this container after stop?
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Zertifikate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+
+    _raw : False
+        Return the raw pyxld object or a dict?
+
     CLI Examples:
 
     .. code-block:: bash
@@ -603,6 +734,37 @@ def container_get(name, remote_addr=None,
 
 def container_delete(name, remote_addr=None,
                      cert=None, key=None, verify_cert=True):
+    '''
+    Delete a container
+
+    name :
+        Name of the container to delete
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Zertifikate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+    '''
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
@@ -612,6 +774,40 @@ def container_delete(name, remote_addr=None,
 
 def container_rename(name, newname, remote_addr=None,
                      cert=None, key=None, verify_cert=True):
+    '''
+    Rename a container
+
+    name :
+        Name of the container to Rename
+
+    newname :
+        The new name of the contianer
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Zertifikate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+    '''
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
@@ -628,7 +824,35 @@ def container_rename(name, newname, remote_addr=None,
 def container_start(name, remote_addr=None,
                     cert=None, key=None, verify_cert=True):
     '''
-    It will always return status=True even if the container is running.
+    Start a container
+
+    name :
+        Name of the container to start
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Zertifikate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
     '''
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
@@ -640,7 +864,35 @@ def container_start(name, remote_addr=None,
 def container_stop(name, timeout=30, force=True, remote_addr=None,
                    cert=None, key=None, verify_cert=True):
     '''
-    It will always return status=True even if the container is stopped.
+    Stop a container
+
+    name :
+        Name of the container to stop
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Zertifikate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
     '''
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
@@ -651,6 +903,37 @@ def container_stop(name, timeout=30, force=True, remote_addr=None,
 
 def container_restart(name, remote_addr=None,
                       cert=None, key=None, verify_cert=True):
+    '''
+    Restart a container
+
+    name :
+        Name of the container to restart
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Zertifikate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+    '''
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
@@ -661,7 +944,35 @@ def container_restart(name, remote_addr=None,
 def container_freeze(name, remote_addr=None,
                      cert=None, key=None, verify_cert=True):
     '''
-    It will always return status=True even if the container is frozen.
+    Freeze a container
+
+    name :
+        Name of the container to freeze
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Zertifikate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
     '''
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
@@ -673,7 +984,35 @@ def container_freeze(name, remote_addr=None,
 def container_unfreeze(name, remote_addr=None,
                        cert=None, key=None, verify_cert=True):
     '''
-    It will always return status=True even if the container is unfrozen.
+    Unfreeze a container
+
+    name :
+        Name of the container to unfreeze
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Zertifikate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
     '''
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
@@ -783,6 +1122,40 @@ def container_migrate(name,
 
 def container_config_get(name, config_key, remote_addr=None,
                          cert=None, key=None, verify_cert=True):
+    '''
+    Get a container config value
+
+    name :
+        Name of the container
+
+    config_key :
+        The config key to retrieve
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Zertifikate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+    '''
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
@@ -791,6 +1164,43 @@ def container_config_get(name, config_key, remote_addr=None,
 
 def container_config_set(name, config_key, config_value, remote_addr=None,
                          cert=None, key=None, verify_cert=True):
+    '''
+    Set a container config value
+
+    name :
+        Name of the container
+
+    config_key :
+        The config key to set
+
+    config_value :
+        The config value to set
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Zertifikate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+    '''
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
@@ -802,6 +1212,40 @@ def container_config_set(name, config_key, config_value, remote_addr=None,
 
 def container_config_delete(name, config_key, remote_addr=None,
                             cert=None, key=None, verify_cert=True):
+    '''
+    Delete a container config value
+
+    name :
+        Name of the container
+
+    config_key :
+        The config key to delete
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Zertifikate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+    '''
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
@@ -813,6 +1257,40 @@ def container_config_delete(name, config_key, remote_addr=None,
 
 def container_device_get(name, device_name, remote_addr=None,
                          cert=None, key=None, verify_cert=True):
+    '''
+    Get a container device
+
+    name :
+        Name of the container
+
+    device_name :
+        The device name to retrieve
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Zertifikate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+    '''
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
@@ -824,6 +1302,46 @@ def container_device_add(name, device_name, device_type='disk',
                          remote_addr=None,
                          cert=None, key=None, verify_cert=True,
                          **kwargs):
+    '''
+    Add a container device
+
+    name :
+        Name of the container
+
+    device_name :
+        The device name to add
+
+    device_type :
+        Type of the device
+
+    ** kwargs :
+        Additional device args
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Zertifikate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+    '''
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
@@ -836,6 +1354,40 @@ def container_device_add(name, device_name, device_type='disk',
 
 def container_device_delete(name, device_name, remote_addr=None,
                             cert=None, key=None, verify_cert=True):
+    '''
+    Delete a container device
+
+    name :
+        Name of the container
+
+    device_name :
+        The device name to delete
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Zertifikate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+    '''
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
     )
@@ -1883,7 +2435,7 @@ def image_copy_lxd(source,
     # Will fail with a CommandExecutionError on connection problems.
     dest_client = pylxd_client_get(remote_addr, cert, key, verify_cert)
 
-    dest_image = src_image.copy_to_lxd(
+    dest_image = src_image.copy(
         dest_client, public=public, auto_update=auto_update, wait=True
     )
 
