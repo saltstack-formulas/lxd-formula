@@ -177,6 +177,7 @@ Migrations and image copies don't work with provided "local" endpoint, overwrite
     lxd:
       remotes:
         local:
+          type: lxd
           remote_addr" : "https://srv02:8443"
           cert" : "/root/.config/lxc/client.crt"
           key" : "/root/.config/lxc/client.key"
@@ -192,6 +193,7 @@ This is just here for other states to get its values.
     lxd:
       remotes:
         srv01:
+          type: lxd
           remote_addr" : "https://srv01:8443"
           cert" : "/root/.config/lxc/client.crt"
           key" : "/root/.config/lxc/client.key"
@@ -205,6 +207,7 @@ A remote we try to authenticate to
     lxd:
       remotes:
         srv02:
+          type: lxd
           remote_addr" : "https://srv02:8443"
           cert" : "/root/.config/lxc/client.crt"
           key" : "/root/.config/lxc/client.key"
