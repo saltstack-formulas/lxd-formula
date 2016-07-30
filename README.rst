@@ -182,6 +182,7 @@ Migrations and image copies don't work with provided "local" endpoint, overwrite
           cert" : "/root/.config/lxc/client.crt"
           key" : "/root/.config/lxc/client.key"
           verify_cert" : False
+          password" : "PaSsW0rD"
 
 A named remote
 ++++++++++++++

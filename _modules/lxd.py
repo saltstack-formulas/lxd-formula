@@ -2900,10 +2900,9 @@ def sync_config_devices(obj, newconfig, newdevices, test=False):
 
     if True:
         dk = set(obj.devices.keys())
-        dk.difference(newdevices.keys())
 
         devices_changes = {}
-        for k in dk:
+        for k in dk.difference(newdevices.keys()):
             # Ignore LXD internals.
             if k == u'root':
                 continue

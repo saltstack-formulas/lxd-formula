@@ -13,11 +13,9 @@ include:
 
     {%- for name, image in images.items() %}
 
-    {%- if 'source' in image and image['source']['type'] == 'lxd' %}
-      {%- if 'remote' in image['source'] %}
-        {%- set source_remote = datamap.remotes.get(image['source']['remote']) %}
-        {%- set _ = image['source'].update(source_remote) %}
-      {%- endif %}
+    {%- if 'source' in image and 'remote' in image['source'] %}
+      {%- set source_remote = datamap.remotes.get(image['source']['remote']) %}
+      {%- set _ = image['source'].update(source_remote) %}
     {%- endif %}
 
 lxd_image_{{ remotename }}_{{ name }}:
