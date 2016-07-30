@@ -343,14 +343,14 @@ def absent(name,
     image = None
     try:
         image = __salt__['lxd.image_get_by_alias'](
-            name, remote_addr, cert, key, verify_cert
+            name, remote_addr, cert, key, verify_cert, _raw=True
         )
     except CommandExecutionError as e:
         return _error(ret, str(e))
     except SaltInvocationError as e:
         try:
             image = __salt__['lxd.image_get'](
-                name, remote_addr, cert, key, verify_cert
+                name, remote_addr, cert, key, verify_cert, _raw=True
             )
         except CommandExecutionError as e:
             return _error(ret, str(e))
