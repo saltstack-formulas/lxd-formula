@@ -34,10 +34,10 @@ Requirements
   you need Ubuntu.
 - This has been tested with Saltstack `2016.3.1`, we don't know if it
   works with other versions.
-- `PyLXD`_ from pcdummy until PR `#169` gets merged.
+- `PyLXD`_ from pcdummy until PR `169`_ gets merged.
 
 .. _PyLXD: https://github.com/pcdummy/pylxd
-.. _#169: https://github.com/lxc/pylxd/pull/169
+.. _169: https://github.com/lxc/pylxd/pull/169
 
 Installation
 ============
