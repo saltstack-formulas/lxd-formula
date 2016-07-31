@@ -2900,9 +2900,11 @@ def sync_config_devices(obj, newconfig, newdevices, test=False):
 
     if True:
         dk = set(obj.devices.keys())
+        ndk = set(newdevices.keys())
 
         devices_changes = {}
-        for k in dk.difference(newdevices.keys()):
+        # Removed devices
+        for k in dk.difference(ndk):
             # Ignore LXD internals.
             if k == u'root':
                 continue
@@ -2917,6 +2919,7 @@ def sync_config_devices(obj, newconfig, newdevices, test=False):
                     'Would remove device "{0}"'
                 ).format(k)
 
+        # Changed devices
         for k, v in six.iteritems(obj.devices):
             # Ignore LXD internals also for new devices.
             if k == u'root':
@@ -2932,6 +2935,22 @@ def sync_config_devices(obj, newconfig, newdevices, test=False):
                     devices_changes[k] = (
                         'Would change device "{0}"'
                     ).format(k)
+
+        # New devices
+        for k in ndk.difference(dk):
+            # Ignore LXD internals.
+            if k == u'root':
+                continue
+
+            if not test:
+                devices_changes[k] = (
+                    'Added device "{0}"'
+                ).format(k)
+                obj.devices[k] = newdevices[k]
+            else:
+                devices_changes[k] = (
+                    'Would add device "{0}"'
+                ).format(k)
 
         if devices_changes:
             changes['devices'] = devices_changes

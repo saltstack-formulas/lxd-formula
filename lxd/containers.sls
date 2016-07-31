@@ -30,19 +30,19 @@ lxd_container_{{ remotename }}_{{ name }}:
     - profiles: {{ container.profiles }}
     {%- endif %}
     {%- if 'config' in container %}
-    - config: {{ config.profiles }}
+    - config: {{ container.config }}
     {%- endif %}
     {%- if 'devices' in container %}
-    - devices: {{ config.devices }}
+    - devices: {{ container.devices }}
     {%- endif %}
     {%- if 'architecture' in container %}
-    - architecture: "{{ config.architecture }}"
+    - architecture: "{{ container.architecture }}"
     {%- endif %}
     {%- if 'ephemeral' in container %}
-    - ephemeral: {{ config.ephemeral }}
+    - ephemeral: {{ container.ephemeral }}
     {%- endif %}
     {%- if 'restart_on_change' in container %}
-    - restart_on_change: {{ config.restart_on_change }}
+    - restart_on_change: {{ container.restart_on_change }}
     {%- endif %}
     - remote_addr: "{{ remote.remote_addr }}"
     - cert: "{{ remote.cert }}"
