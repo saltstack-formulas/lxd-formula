@@ -2925,6 +2925,10 @@ def sync_config_devices(obj, newconfig, newdevices, test=False):
             if k == u'root':
                 continue
 
+            if k not in newdevices:
+                # In test mode we don't delete devices above.
+                continue
+
             if newdevices[k] != v:
                 if not test:
                     devices_changes[k] = (
