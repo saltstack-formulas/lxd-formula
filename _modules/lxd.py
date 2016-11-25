@@ -675,6 +675,11 @@ def container_create(name, source, profiles=['default'],
     if not wait:
         return container.json()['operation']
 
+    # Add devices if not wait and devices have been given.
+    if devices:
+        for dn, dargs in six.iteritems(devices):
+            container_device_add(name, dn, **dargs)
+
     if _raw:
         return container
 
@@ -2834,7 +2839,7 @@ def sync_config_devices(obj, newconfig, newdevices, test=False):
         # Removed keys
         for k in ock.difference(cck):
             # Ignore LXD internals.
-            if k.startswith('volatile.'):
+            if k.startswith('volatile.') or k.startswith('image.'):
                 continue
 
             if not test:
@@ -2850,7 +2855,7 @@ def sync_config_devices(obj, newconfig, newdevices, test=False):
         # same keys
         for k in cck.intersection(ock):
             # Ignore LXD internals.
-            if k.startswith('volatile.'):
+            if k.startswith('volatile.') or k.startswith('image.'):
                 continue
 
             if newconfig[k] != obj.config[k]:
@@ -2869,7 +2874,7 @@ def sync_config_devices(obj, newconfig, newdevices, test=False):
         # New keys
         for k in cck.difference(ock):
             # Ignore LXD internals.
-            if k.startswith('volatile.'):
+            if k.startswith('volatile.') or k.startswith('image.'):
                 continue
 
             if not test:
