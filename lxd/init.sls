@@ -3,9 +3,9 @@
 # vi: set ft=yaml.jinja :
 
 include:
-  - lxd.lxd
   - lxd.client
   - lxd.python
+  - lxd.lxd
   - lxd.remotes
   - lxd.profiles
   - lxd.images

@@ -34,7 +34,7 @@ Requirements
   you need Ubuntu.
 - This has been tested with Saltstack `2016.3.1`, we don't know if it
   works with other versions.
-- `PyLXD`_ from pcdummy until PR `169`_ gets merged.
+- `PyLXD`_ version 2.0.5 from PIP (enable use_pip and it will get that version!).
 
 .. _PyLXD: https://github.com/pcdummy/pylxd
 .. _169: https://github.com/lxc/pylxd/pull/169
@@ -178,10 +178,10 @@ Migrations and image copies don't work with provided "local" endpoint, overwrite
       remotes:
         local:
           type: lxd
-          remote_addr" : "https://srv02:8443"
-          cert" : "/root/.config/lxc/client.crt"
-          key" : "/root/.config/lxc/client.key"
-          verify_cert" : False
+          remote_addr : "https://srv02:8443"
+          cert : "/root/.config/lxc/client.crt"
+          key : "/root/.config/lxc/client.key"
+          verify_cert : False
           password" : "PaSsW0rD"
 
 A named remote
@@ -195,10 +195,10 @@ This is just here for other states to get its values.
       remotes:
         srv01:
           type: lxd
-          remote_addr" : "https://srv01:8443"
-          cert" : "/root/.config/lxc/client.crt"
-          key" : "/root/.config/lxc/client.key"
-          verify_cert" : False
+          remote_addr : "https://srv01:8443"
+          cert : "/root/.config/lxc/client.crt"
+          key : "/root/.config/lxc/client.key"
+          verify_cert : False
 
 A remote we try to authenticate to
 ++++++++++++++++++++++++++++++++++
@@ -209,10 +209,10 @@ A remote we try to authenticate to
       remotes:
         srv02:
           type: lxd
-          remote_addr" : "https://srv02:8443"
-          cert" : "/root/.config/lxc/client.crt"
+          remote_addr : "https://srv02:8443"
+          cert : "/root/.config/lxc/client.crt"
           key" : "/root/.config/lxc/client.key"
-          verify_cert" : False
+          verify_cert : False
           password" : "PaSsW0rD"
 
 
@@ -305,7 +305,7 @@ A local profile that adds a shared mount point
                 # Source on the host
                 source: "/home/shared"
                 # Path in the container
-                path: "/home/shared"
+                path: "home/shared"
 
 
 A limited container profile

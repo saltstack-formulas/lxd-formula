@@ -7,6 +7,7 @@
 {% if datamap.python.use_pip %}
 include:
   - pip
+  - pip.extensions
 {% endif %}
 
 {% if datamap.python.use_pip %}
@@ -31,7 +32,7 @@ lxd_python:
   {% if datamap.python.use_pip %}
   pip:
     - {{ datamap.python.pip_package.action }}
-    - name: pylxd
+    - name: pylxd=={{ datamap.python.pip_version }}
     - reload_modules: True
     - require:
       - pkg: lxd_python_pip
