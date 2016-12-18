@@ -46,7 +46,11 @@ import salt.ext.six as six
 # Import 3rd-party libs
 try:
     import pylxd
-    import pylxd.image
+    try:
+        # Try old api (pre 2.1.3?)
+        from pylxd.image import Image
+    except ImportError:
+        from pylxd.models.image import Image
     PYLXD_AVAILABLE = True
 except ImportError:
     PYLXD_AVAILABLE = False
@@ -2235,7 +2239,7 @@ def image_delete(name,
     # This will fail with a SaltInvocationError if
     # the image doesn't exists and with a CommandExecutionError
     # on connection problems.
-    if not isinstance(name, pylxd.image.Image):
+    if not isinstance(name, Image):
         image = None
         try:
             image = image_get_by_alias(
@@ -2319,7 +2323,7 @@ def image_from_simplestreams(server,
     '''
     client = pylxd_client_get(remote_addr, cert, key, verify_cert)
     image = client.images.create_from_simplestreams(
-        server, alias, public, auto_update
+        server, alias, public=public, auto_update=auto_update
     )
 
     # Aliases support
@@ -2392,7 +2396,9 @@ def image_from_url(url,
         # noqa
     '''
     client = pylxd_client_get(remote_addr, cert, key, verify_cert)
-    image = client.images.create_from_url(url, public, auto_update)
+    image = client.images.create_from_url(
+        url, public=public, auto_update=auto_update
+    )
 
     # Aliases support
     for alias in aliases:
@@ -2469,7 +2475,7 @@ def image_from_file(filename,
         data = fp.read()
 
     client = pylxd_client_get(remote_addr, cert, key, verify_cert)
-    image = client.images.create(data, public, wait=True)
+    image = client.images.create(data, public=public, wait=True)
 
     # Aliases support
     for alias in aliases:
@@ -2655,7 +2661,7 @@ def image_alias_add(image,
 
         # noqa
     '''
-    if not isinstance(image, pylxd.image.Image):
+    if not isinstance(image, Image):
         name = image
 
         # This will fail with a SaltInvocationError if
@@ -2729,7 +2735,7 @@ def image_alias_delete(image,
 
         # noqa
     '''
-    if not isinstance(image, pylxd.image.Image):
+    if not isinstance(image, Image):
         name = image
 
         # This will fail with a SaltInvocationError if
