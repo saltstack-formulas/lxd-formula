@@ -207,7 +207,7 @@ def present(name,
 
             if source['type'] == 'file':
                 if 'saltenv' not in source:
-                    source['saltenv'] = 'base'
+                    source['saltenv'] = __env__
                 image = __salt__['lxd.image_from_file'](
                     source['filename'],
                     remote_addr=remote_addr,
