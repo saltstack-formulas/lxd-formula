@@ -154,6 +154,8 @@ def present(name,
         but in the most cases you want to set it off as LXD
         normaly uses self-signed certificates.
     '''
+    # Create a copy of aliases, since we're modifying it here
+    aliases = aliases[:]
     ret = {
         'name': name,
         'source': source,
