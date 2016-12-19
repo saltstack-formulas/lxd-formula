@@ -832,7 +832,7 @@ def migrated(name,
     if __opts__['test']:
         ret['changes']['migrated'] = (
             'Would migrate the container "{0}" from "{1}" to "{2}"'
-        ).format(name, remote_addr, dest_remote_addr)
+        ).format(name, src_remote_addr, remote_addr)
         return _unchanged(ret, ret['changes']['migrated'])
 
     try:
