@@ -2679,10 +2679,9 @@ def image_alias_add(image,
                 key, verify_cert, _raw=True
             )
 
-    try:
-        image.delete_alias(alias)
-    except pylxd.exceptions.LXDAPIException:
-        pass
+    for alias_info in image.aliases:
+        if alias_info['name'] == alias:
+            return True
     image.add_alias(alias, description)
 
     return True
