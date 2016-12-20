@@ -338,7 +338,7 @@ def pylxd_client_get(remote_addr=None, cert=None, key=None, verify_cert=True):
         return _connection_pool[pool_key]
 
     try:
-        if remote_addr is None:
+        if remote_addr is None or remote_addr == '/var/lib/lxd/unix.socket':
             log.debug('Trying to connect to the local unix socket')
             client = pylxd.Client()
         else:
