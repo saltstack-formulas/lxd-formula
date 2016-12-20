@@ -49,7 +49,7 @@ def __virtual__():
     '''
     Only load if the lxd module is available in __salt__
     '''
-    return __virtualname__ if 'lxd.pylxd_version' in __salt__ else False
+    return __virtualname__ if 'lxd.version' in __salt__ else False
 
 
 def present(name,
@@ -154,6 +154,8 @@ def present(name,
         but in the most cases you want to set it off as LXD
         normaly uses self-signed certificates.
     '''
+    # Create a copy of aliases, since we're modifying it here
+    aliases = aliases[:]
     ret = {
         'name': name,
         'source': source,
@@ -207,7 +209,7 @@ def present(name,
 
             if source['type'] == 'file':
                 if 'saltenv' not in source:
-                    source['saltenv'] = 'base'
+                    source['saltenv'] = __env__
                 image = __salt__['lxd.image_from_file'](
                     source['filename'],
                     remote_addr=remote_addr,

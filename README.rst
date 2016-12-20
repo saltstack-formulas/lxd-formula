@@ -324,8 +324,10 @@ See `stgraber's blog`_
             config:
               limits.cpu: 1
               limits.memory: 512MB
-              limits.read: 20Iops
-              limits.write: 10Iops
+            device:
+              root:
+                limits.read: 20Iops
+                limits.write: 10Iops
 
 
 MongoDB special case
@@ -542,6 +544,9 @@ Authors
 `René Jochum`_ <rene@jochums.at>
 
 .. _René Jochum: https://rene.jochums.at
+
+Kees Bos <k.bos@capitar.com>
+
 
 License
 =======
