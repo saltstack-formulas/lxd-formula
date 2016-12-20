@@ -545,6 +545,9 @@ Authors
 
 .. _René Jochum: https://rene.jochums.at
 
+Kees Bos <k.bos@capitar.com>
+
+
 License
 =======
 
