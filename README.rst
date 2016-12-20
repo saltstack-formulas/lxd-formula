@@ -324,8 +324,10 @@ See `stgraber's blog`_
             config:
               limits.cpu: 1
               limits.memory: 512MB
-              limits.read: 20Iops
-              limits.write: 10Iops
+            device:
+              root:
+                limits.read: 20Iops
+                limits.write: 10Iops
 
 
 MongoDB special case
