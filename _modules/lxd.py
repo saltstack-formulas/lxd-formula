@@ -303,7 +303,7 @@ def pylxd_client_get(remote_addr=None, cert=None, key=None, verify_cert=True):
             /var/lib/mysocket.sock
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -431,7 +431,7 @@ def authenticate(remote_addr, password, cert, key, verify_cert=True):
         The password of the remote.
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -493,7 +493,7 @@ def container_list(list_names=False, remote_addr=None,
             /var/lib/mysocket.sock
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -606,7 +606,7 @@ def container_create(name, source, profiles=['default'],
             /var/lib/mysocket.sock
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -701,7 +701,7 @@ def container_get(name, remote_addr=None,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -753,7 +753,7 @@ def container_delete(name, remote_addr=None,
             /var/lib/mysocket.sock
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -796,7 +796,7 @@ def container_rename(name, newname, remote_addr=None,
             /var/lib/mysocket.sock
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -842,7 +842,7 @@ def container_start(name, remote_addr=None,
             /var/lib/mysocket.sock
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -882,7 +882,7 @@ def container_stop(name, timeout=30, force=True, remote_addr=None,
             /var/lib/mysocket.sock
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -922,7 +922,7 @@ def container_restart(name, remote_addr=None,
             /var/lib/mysocket.sock
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -962,7 +962,7 @@ def container_freeze(name, remote_addr=None,
             /var/lib/mysocket.sock
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -1002,7 +1002,7 @@ def container_unfreeze(name, remote_addr=None,
             /var/lib/mysocket.sock
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -1060,7 +1060,7 @@ def container_migrate(name,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -1144,7 +1144,7 @@ def container_config_get(name, config_key, remote_addr=None,
             /var/lib/mysocket.sock
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -1189,7 +1189,7 @@ def container_config_set(name, config_key, config_value, remote_addr=None,
             /var/lib/mysocket.sock
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -1234,7 +1234,7 @@ def container_config_delete(name, config_key, remote_addr=None,
             /var/lib/mysocket.sock
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -1279,7 +1279,7 @@ def container_device_get(name, device_name, remote_addr=None,
             /var/lib/mysocket.sock
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -1330,7 +1330,7 @@ def container_device_add(name, device_name, device_type='disk',
             /var/lib/mysocket.sock
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -1376,7 +1376,7 @@ def container_device_delete(name, device_name, remote_addr=None,
             /var/lib/mysocket.sock
 
     cert :
-        PEM Formatted SSL Zertifikate.
+        PEM Formatted SSL Certificate.
 
         Examples:
             ~/.config/lxc/client.crt
@@ -1436,6 +1436,65 @@ def container_file_get(name, src, dst, remote_addr=None,
     dst = os.path.expanduser(dst)
 
 
+def container_execute(name, cmd, remote_addr=None,
+                      cert=None, key=None, verify_cert=True):
+    '''
+    Execute a command list on a container.
+
+    name :
+        Name of the container
+
+    cmd :
+        Command to be executed (as a list)
+
+        Example :
+            '["ls", "-l"]'
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Certificate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+
+    CLI Example:
+
+    .. code-block:: bash
+
+        salt '*' lxd.container_execute <container name> '["ls", "-l"]'
+
+    '''
+    container = container_get(
+        name, remote_addr, cert, key, verify_cert, _raw=True
+    )
+    result = container.execute(cmd)
+    if not hasattr(result, 'exit_code'):
+        return dict(stdout=result[0], stderr=result[1])
+    return dict(
+        exit_code=result.exit_code,
+        stdout=result.stdout,
+        stderr=result.stderr
+    )
+
+
 ####################
 # Profile Management
 ####################
@@ -1456,7 +1515,7 @@ def profile_list(list_names=False, remote_addr=None,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -1519,7 +1578,7 @@ def profile_create(name, config=None, devices=None, description=None,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -1579,7 +1638,7 @@ def profile_get(name, remote_addr=None,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -1636,7 +1695,7 @@ def profile_delete(name, remote_addr=None,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -1690,7 +1749,7 @@ def profile_config_get(name, config_key, remote_addr=None,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -1747,7 +1806,7 @@ def profile_config_set(name, config_key, config_value,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -1802,7 +1861,7 @@ def profile_config_delete(name, config_key, remote_addr=None,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -1857,7 +1916,7 @@ def profile_device_get(name, device_name, remote_addr=None,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -1912,7 +1971,7 @@ def profile_device_set(name, device_name, device_type='disk',
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -1974,7 +2033,7 @@ def profile_device_delete(name, device_name, remote_addr=None,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -2034,7 +2093,7 @@ def image_list(list_aliases=False, remote_addr=None,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -2086,7 +2145,7 @@ def image_get(fingerprint,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -2147,7 +2206,7 @@ def image_get_by_alias(alias,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -2208,7 +2267,7 @@ def image_delete(image,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -2264,7 +2323,7 @@ def image_from_simplestreams(server,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -2338,7 +2397,7 @@ def image_from_url(url,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -2412,7 +2471,7 @@ def image_from_file(filename,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -2491,7 +2550,7 @@ def image_copy_lxd(source,
             https://mysourceserver.lan:8443
 
     src_cert :
-        PEM Formatted SSL Zertifikate for the source
+        PEM Formatted SSL Certificate for the source
 
         Examples:
             ~/.config/lxc/client.crt
@@ -2514,7 +2573,7 @@ def image_copy_lxd(source,
             https://mydestserver.lan:8443
 
     cert :
-        PEM Formatted SSL Zertifikate for the destination
+        PEM Formatted SSL Certificate for the destination
 
         Examples:
             ~/.config/lxc/client.crt
@@ -2616,7 +2675,7 @@ def image_alias_add(image,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
@@ -2673,7 +2732,7 @@ def image_alias_delete(image,
                 /var/lib/mysocket.sock
 
         cert :
-            PEM Formatted SSL Zertifikate.
+            PEM Formatted SSL Certificate.
 
             Examples:
                 ~/.config/lxc/client.crt
