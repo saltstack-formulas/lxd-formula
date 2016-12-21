@@ -46,11 +46,6 @@ import salt.ext.six as six
 # Import 3rd-party libs
 try:
     import pylxd
-    try:
-        # Try old api (pre 2.1.3?)
-        from pylxd.image import Image
-    except ImportError:
-        from pylxd.models.image import Image
     PYLXD_AVAILABLE = True
 except ImportError:
     PYLXD_AVAILABLE = False
@@ -343,7 +338,7 @@ def pylxd_client_get(remote_addr=None, cert=None, key=None, verify_cert=True):
         return _connection_pool[pool_key]
 
     try:
-        if remote_addr is None:
+        if remote_addr is None or remote_addr == '/var/lib/lxd/unix.socket':
             log.debug('Trying to connect to the local unix socket')
             client = pylxd.Client()
         else:
@@ -2193,7 +2188,7 @@ def image_get_by_alias(alias,
     return _pylxd_model_to_dict(image)
 
 
-def image_delete(name,
+def image_delete(image,
                  remote_addr=None,
                  cert=None,
                  key=None,
@@ -2236,23 +2231,7 @@ def image_delete(name,
             $ salt '*' lxd.image_delete xenial/amd64
     '''
 
-    # This will fail with a SaltInvocationError if
-    # the image doesn't exists and with a CommandExecutionError
-    # on connection problems.
-    if not isinstance(name, Image):
-        image = None
-        try:
-            image = image_get_by_alias(
-                name, remote_addr, cert,
-                key, verify_cert, _raw=True
-            )
-        except SaltInvocationError:
-            image = image_get(
-                name, remote_addr, cert,
-                key, verify_cert, _raw=True
-            )
-    else:
-        image = name
+    image = _verify_image(image, remote_addr, cert, key, verify_cert)
 
     image.delete()
     return True
@@ -2661,23 +2640,7 @@ def image_alias_add(image,
 
         # noqa
     '''
-    if not isinstance(image, Image):
-        name = image
-
-        # This will fail with a SaltInvocationError if
-        # the image doesn't exists on the source and with a
-        # CommandExecutionError on connection problems.
-        image = None
-        try:
-            image = image_get_by_alias(
-                name, remote_addr, cert,
-                key, verify_cert, _raw=True
-            )
-        except SaltInvocationError:
-            image = image_get(
-                name, remote_addr, cert,
-                key, verify_cert, _raw=True
-            )
+    image = _verify_image(image, remote_addr, cert, key, verify_cert)
 
     for alias_info in image.aliases:
         if alias_info['name'] == alias:
@@ -2734,23 +2697,7 @@ def image_alias_delete(image,
 
         # noqa
     '''
-    if not isinstance(image, Image):
-        name = image
-
-        # This will fail with a SaltInvocationError if
-        # the image doesn't exists on the source and with a
-        # CommandExecutionError on connection problems.
-        image = None
-        try:
-            image = image_get_by_alias(
-                name, remote_addr, cert,
-                key, verify_cert, _raw=True
-            )
-        except SaltInvocationError:
-            image = image_get(
-                name, remote_addr, cert,
-                key, verify_cert, _raw=True
-            )
+    image = _verify_image(image, remote_addr, cert, key, verify_cert)
 
     try:
         image.delete_alias(alias)
@@ -3036,6 +2983,36 @@ def _delete_property_dict_item(obj, prop, key):
     pylxd_save_object(obj)
 
     return True
+
+
+def _verify_image(image,
+                  remote_addr=None,
+                  cert=None,
+                  key=None,
+                  verify_cert=True):
+    # Get image by alias/fingerprint or check for fingerprint attribute
+    if isinstance(image, six.string_types):
+        name = image
+
+        # This will fail with a SaltInvocationError if
+        # the image doesn't exists on the source and with a
+        # CommandExecutionError on connection problems.
+        image = None
+        try:
+            image = image_get_by_alias(
+                name, remote_addr, cert,
+                key, verify_cert, _raw=True
+            )
+        except SaltInvocationError:
+            image = image_get(
+                name, remote_addr, cert,
+                key, verify_cert, _raw=True
+            )
+    elif not hasattr(image, 'fingerprint'):
+        raise SaltInvocationError(
+            'Invalid image \'{0}\''.format(image)
+        )
+    return image
 
 
 def _pylxd_model_to_dict(obj):

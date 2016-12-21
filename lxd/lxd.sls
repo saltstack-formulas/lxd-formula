@@ -10,7 +10,7 @@ lxd_lxd:
     {{ sls_block(datamap.lxd.package.opts )}}
     - pkgs: {{ datamap.lookup.lxd.packages }}
 
-{% if datamap.lxd.run_init -%}
+{% if datamap.lxd.run_init %}
   lxd:
     - init
     - storage_backend: "{{ datamap.lxd.init.storage_backend }}"
@@ -24,7 +24,7 @@ lxd_lxd:
     - require:
       - pkg: lxd_lxd
       - sls: lxd.python
-{%- endif %}
+{% endif %}
 
 {% for name, cdict in datamap.lxd.config.items() %}
 lxd_config_{{ name }}:
