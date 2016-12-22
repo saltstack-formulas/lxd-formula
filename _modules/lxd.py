@@ -1462,7 +1462,8 @@ def container_device_delete(name, device_name, remote_addr=None,
 
 
 def container_file_put(name, src, dst, recursive=False, remove_existing=False,
-                       mode=None, uid=None, gid=None, remote_addr=None,
+                       mode=None, uid=None, gid=None, saltenv='base',
+                       remote_addr=None,
                        cert=None, key=None, verify_cert=True):
     '''
     Put a file into a container
@@ -1548,7 +1549,13 @@ def container_file_put(name, src, dst, recursive=False, remove_existing=False,
     src = os.path.expanduser(src)
 
     if not os.path.isabs(src):
-        raise SaltInvocationError('File path must be absolute.')
+        if src.find('://') >= 0:
+            cached_file = __salt__['cp.cache_file'](src, saltenv=saltenv)
+            if not cached_file:
+                raise SaltInvocationError("File '{0}' not found".format(src))
+        if not os.path.isabs(cached_file):
+            raise SaltInvocationError('File path must be absolute.')
+        src = cached_file
 
     # Make sure that src doesn't end with '/', unless it's '/'
     src = src.rstrip(os.path.sep)
