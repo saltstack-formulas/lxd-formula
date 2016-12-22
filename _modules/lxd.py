@@ -825,6 +825,47 @@ def container_rename(name, newname, remote_addr=None,
     return _pylxd_model_to_dict(container)
 
 
+def container_state(name, remote_addr=None,
+                    cert=None, key=None, verify_cert=True):
+    '''
+    Get container state
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Certificate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+    '''
+    container = container_get(
+        name, remote_addr, cert, key, verify_cert, _raw=True
+    )
+    state = container.state()
+    return dict([
+        (k, getattr(state, k))
+        for k in dir(state)
+        if not k.startswith('_')
+    ])
+
+
 def container_start(name, remote_addr=None,
                     cert=None, key=None, verify_cert=True):
     '''
@@ -1401,39 +1442,328 @@ def container_device_delete(name, device_name, remote_addr=None,
     )
 
 
-def container_file_put(name, src, dst, recurse=False, remove_existing=False,
-                       remote_addr=None,
+def container_file_put(name, src, dst, recursive=False, remove_existing=False,
+                       mode=None, uid=None, gid=None, remote_addr=None,
                        cert=None, key=None, verify_cert=True):
-    ''' TODO: This is a WIP.
     '''
-    raise NotImplementedError()
+    Put a file into a container
+
+    name :
+        Name of the container
+
+    src :
+        The source file or directory
+
+    dst :
+        The destination file or directory
+
+    recursive :
+        Decent into src directory
+
+    remove_existing :
+        Replace destination if it exists
+
+    mode :
+        Set file mode to octal number
+
+    uid :
+        Set file uid (owner)
+
+    gid :
+        Set file gid (group)
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Certificate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+
+    CLI Example:
+
+    .. code-block:: bash
+
+        salt '*' lxd.container_file_put <container name> /var/tmp/foo /var/tmp/
+
+    '''
+    # Possibilities:
+    #  (src, dst, dir, dir1, and dir2 are directories)
+    #  cp /src/file1 /dst/file1
+    #  cp /src/file1 /dst/file2
+    #  cp /src/file1 /dst
+    #  cp /src/file1 /dst/
+    #  cp -r /src/dir /dst/
+    #  cp -r /src/dir/ /dst/
+    #  cp -r /src/dir1 /dst/dir2 (which is not /src/dir1 /dst/dir2/)
+    #  cp -r /src/dir1 /dst/dir2/
+
+    # Fix mode. Salt commandline doesn't use octals, so 0600 will be
+    # the decimal integer 600 (and not the octal 0600). So, it it's
+    # and integer, handle it as if it where a octal representation.
+    mode = str(mode)
+    if not mode.startswith('0'):
+        mode = '0{0}'.format(mode)
+
+    container = container_get(
+        name, remote_addr, cert, key, verify_cert, _raw=True
+    )
+
     src = os.path.expanduser(src)
 
     if not os.path.isabs(src):
         raise SaltInvocationError('File path must be absolute.')
+
+    # Make sure that src doesn't end with '/', unless it's '/'
+    src = src.rstrip(os.path.sep)
+    if not src:
+        src = os.path.sep
 
     if not os.path.exists(src):
         raise CommandExecutionError(
             'No such file or directory \'{0}\''.format(src)
         )
 
+    if os.path.isdir(src) and not recursive:
+        raise SaltInvocationError(
+            ("Cannot copy overwriting a directory "
+             "without recursive flag set to true!")
+        )
+
     try:
-        if os.path.isdir(src):
-            if not recurse:
-                raise SaltInvocationError(
-                    ("Cannot copy overwriting a directory "
-                     "without recurse flag set to true!")
-                )
-    except OSError:
+        dst_is_directory = False
+        container.files.get(os.path.join(dst, '.'))
+    except pylxd.exceptions.LXDAPIException as why:
+        if str(why).find('Is a directory') >= 0:
+            dst_is_directory = True
+    except pylxd.exceptions.NotFound:
         pass
 
+    if os.path.isfile(src):
+        # Source is a file
+        if dst_is_directory:
+            dst = os.path.join(dst, os.path.basename(src))
+            if not remove_existing:
+                found = True
+                try:
+                    container.files.get(os.path.join(dst))
+                except pylxd.exceptions.LXDAPIException as why:
+                    if str(why).find('not found') >= 0:
+                        # Old version of pylxd
+                        found = False
+                    else:
+                        raise
+                except pylxd.exceptions.NotFound:
+                    found = False
+                if found:
+                    raise SaltInvocationError(
+                        "Destination exists and remove_existing is false"
+                    )
+        if mode is not None or uid is not None or gid is not None:
+            # Need to get file stats
+            stat = os.stat(src)
+            if mode is None:
+                mode = oct(stat.st_mode)
+            if uid is None:
+                uid = stat.st_uid
+            if gid is None:
+                gid = stat.st_gid
 
-def container_file_get(name, src, dst, remote_addr=None,
+        container.files.put(
+            dst, open(src, 'rb').read(),
+            mode=mode, uid=uid, gid=gid
+
+        )
+        return True
+    elif not os.path.isdir(src):
+        raise SaltInvocationError(
+            "Source is neither file nor directory"
+        )
+
+    # Source is a directory
+    # idx for dstdir = dst + src[idx:]
+    if dst.endswith(os.sep):
+        idx = len(os.path.dirname(src))
+    elif dst_is_directory:
+        idx = len(src)
+    else:
+        # Destination is not a directory and doesn't end with '/'
+        # Check that the parent directory of dst exists
+        # and is a directory
+        try:
+            container.files.get(os.path.join(os.path.dirname(dst), '.'))
+        except pylxd.exceptions.LXDAPIException as why:
+            if str(why).find('Is a directory') >= 0:
+                dst_is_directory = True
+                # destination is non-existent
+                # cp -r /src/dir1 /scr/dir1
+                # cp -r /src/dir1 /scr/dir2
+                idx = len(src)
+                remove_existing = True
+        except pylxd.exceptions.NotFound:
+            pass
+
+    # Copy src directory recursive
+    if not remove_existing:
+        raise SaltInvocationError(
+            "Destination exists and remove_existing is false"
+        )
+
+    # Collect all directories first, to create them in one call
+    # (for performance reasons)
+    dstdirs = []
+    for path, dirname, files in os.walk(src):
+        dstdir = os.path.join(dst, path[idx:].lstrip(os.path.sep))
+        dstdirs.append(dstdir)
+    container.execute(['mkdir', '-p'] + dstdirs)
+
+    set_mode = mode
+    set_uid = uid
+    set_gid = gid
+    # Now transfer the files
+    for path, dirname, files in os.walk(src):
+        dstdir = os.path.join(dst, path[idx:].lstrip(os.path.sep))
+        for name in files:
+            src_name = os.path.join(path, name)
+            dst_name = os.path.join(dstdir, name)
+
+            if mode is not None or uid is not None or gid is not None:
+                # Need to get file stats
+                stat = os.stat(src_name)
+                if mode is None:
+                    set_mode = oct(stat.st_mode)
+                if uid is None:
+                    set_uid = stat.st_uid
+                if gid is None:
+                    set_gid = stat.st_gid
+
+            container.files.put(
+                dst_name, open(src_name, 'rb').read(),
+                mode=set_mode, uid=set_uid, gid=set_gid
+            )
+
+    return True
+
+
+def container_file_get(name, src, dst, remove_existing=False,
+                       mode=None, uid=None, gid=None, remote_addr=None,
                        cert=None, key=None, verify_cert=True):
-    ''' TODO: This is a WIP.
     '''
-    raise NotImplementedError()
+    Get a file from a container
+
+    name :
+        Name of the container
+
+    src :
+        The source file or directory
+
+    dst :
+        The destination file or directory
+
+    mode :
+        Set file mode to octal number
+
+    uid :
+        Set file uid (owner)
+
+    gid :
+        Set file gid (group)
+
+    remote_addr :
+        An URL to a remote Server, you also have to give cert and key if
+        you provide remote_addr and its a TCP Address!
+
+        Examples:
+            https://myserver.lan:8443
+            /var/lib/mysocket.sock
+
+    cert :
+        PEM Formatted SSL Certificate.
+
+        Examples:
+            ~/.config/lxc/client.crt
+
+    key :
+        PEM Formatted SSL Key.
+
+        Examples:
+            ~/.config/lxc/client.key
+
+    verify_cert : True
+        Wherever to verify the cert, this is by default True
+        but in the most cases you want to set it off as LXD
+        normaly uses self-signed certificates.
+
+    '''
+    # Fix mode. Salt commandline doesn't use octals, so 0600 will be
+    # the decimal integer 600 (and not the octal 0600). So, it it's
+    # and integer, handle it as if it where a octal representation.
+    mode = str(mode)
+    if not mode.startswith('0'):
+        mode = '0{0}'.format(mode)
+
+    container = container_get(
+        name, remote_addr, cert, key, verify_cert, _raw=True
+    )
+
     dst = os.path.expanduser(dst)
+    if not os.path.isabs(dst):
+        raise SaltInvocationError('File path must be absolute.')
+
+    if os.path.isdir(dst):
+        dst = os.path.join(dst, os.path.basename(src))
+    elif not os.path.isdir(os.path.dirname(dst)):
+        raise SaltInvocationError(
+            "Parent directory for destination doesn't exist."
+        )
+
+    if os.path.exists(dst):
+        if not remove_existing:
+            raise SaltInvocationError(
+                'Destination exists and remove_existing is false.'
+            )
+        if not os.path.isfile(dst):
+            raise SaltInvocationError(
+                'Destination exists but is not a file.'
+            )
+    else:
+        dst_path = os.path.dirname(dst)
+        if not os.path.isdir(dst_path):
+            raise CommandExecutionError(
+                'No such file or directory \'{0}\''.format(dst_path)
+            )
+        dst = os.path.join(dst, os.path.basename(src))
+    open(dst, 'wb').write(container.files.get(src))
+    if mode:
+        os.chmod(dst, mode)
+    if uid or uid is '0':
+        uid = int(uid)
+    else:
+        uid = -1
+    if gid or gid is '0':
+        gid = int(gid)
+    else:
+        gid = -1
+    if uid != -1 or gid != -1:
+        os.chown(dst, uid, gid)
+    return True
 
 
 def container_execute(name, cmd, remote_addr=None,
@@ -3081,3 +3411,45 @@ def _pylxd_model_to_dict(obj):
         if hasattr(obj, key):
             marshalled[key] = getattr(obj, key)
     return marshalled
+
+
+#
+# Monkey patching for missing functionality in pylxd
+#
+
+import pylxd.exceptions     # NOQA
+
+if not hasattr(pylxd.exceptions, 'NotFound'):
+    # Old version of pylxd
+
+    class NotFound(pylxd.exceptions.LXDAPIException):
+        """An exception raised when an object is not found."""
+
+    pylxd.exceptions.NotFound = NotFound
+
+try:
+    from pylxd.container import Container
+except ImportError:
+    from pylxd.models.container import Container
+
+
+class FilesManager(Container.FilesManager):
+
+    def put(self, filepath, data, mode=None, uid=None, gid=None):
+        if isinstance(mode, int):
+            mode = oct(mode)
+        elif not mode.startswith('0'):
+            mode = '0{0}'.format(mode)
+        headers = {}
+        if mode is not None:
+            headers['X-LXD-mode'] = mode
+        if uid is not None:
+            headers['X-LXD-uid'] = str(uid)
+        if gid is not None:
+            headers['X-LXD-gid'] = str(gid)
+        response = self._client.api.containers[
+            self._container.name].files.post(
+            params={'path': filepath}, data=data, headers=headers)
+        return response.status_code == 200
+
+Container.FilesManager = FilesManager
