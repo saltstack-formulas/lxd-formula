@@ -825,7 +825,7 @@ def container_rename(name, newname, remote_addr=None,
     return _pylxd_model_to_dict(container)
 
 
-def container_state(name, remote_addr=None,
+def container_state(name=None, remote_addr=None,
                     cert=None, key=None, verify_cert=True):
     '''
     Get container state
@@ -855,15 +855,34 @@ def container_state(name, remote_addr=None,
         but in the most cases you want to set it off as LXD
         normaly uses self-signed certificates.
     '''
-    container = container_get(
-        name, remote_addr, cert, key, verify_cert, _raw=True
-    )
-    state = container.state()
-    return dict([
-        (k, getattr(state, k))
-        for k in dir(state)
-        if not k.startswith('_')
-    ])
+    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+
+    if name is None:
+        containers = client.containers.all()
+    else:
+        try:
+            containers = [client.containers.get(name)]
+        except pylxd.exceptions.LXDAPIException:
+            raise SaltInvocationError(
+                'Container \'{0}\' not found'.format(name)
+            )
+
+    states = []
+    for container in containers:
+        state = {}
+        state = container.state()
+
+        states.append(dict([
+            (
+                container.name,
+                dict([
+                    (k, getattr(state, k))
+                    for k in dir(state)
+                    if not k.startswith('_')
+                ])
+            )
+        ]))
+    return states
 
 
 def container_start(name, remote_addr=None,
