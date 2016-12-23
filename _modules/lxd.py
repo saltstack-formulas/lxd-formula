@@ -685,7 +685,7 @@ def container_create(name, source, profiles=['default'],
     return _pylxd_model_to_dict(container)
 
 
-def container_get(name, remote_addr=None,
+def container_get(name=None, remote_addr=None,
                   cert=None, key=None, verify_cert=True, _raw=False):
     ''' Gets a container from the LXD
 
@@ -722,18 +722,27 @@ def container_get(name, remote_addr=None,
     '''
     client = pylxd_client_get(remote_addr, cert, key, verify_cert)
 
-    container = None
-    try:
-        container = client.containers.get(name)
-    except pylxd.exceptions.LXDAPIException:
-        raise SaltInvocationError(
-            'Container \'{0}\' not found'.format(name)
-        )
+    if name is None:
+        containers = client.containers.all()
+        if _raw:
+            return containers
+    else:
+        containers = []
+        try:
+            containers = [client.containers.get(name)]
+        except pylxd.exceptions.LXDAPIException:
+            raise SaltInvocationError(
+                'Container \'{0}\' not found'.format(name)
+            )
+        if _raw:
+            return containers[0]
 
-    if _raw:
-        return container
-
-    return _pylxd_model_to_dict(container)
+    infos = []
+    for container in containers:
+        infos.append(dict([
+            (container.name, _pylxd_model_to_dict(container))
+        ]))
+    return infos
 
 
 def container_delete(name, remote_addr=None,
