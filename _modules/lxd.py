@@ -3315,7 +3315,7 @@ def sync_config_devices(obj, newconfig, newdevices, test=False):
                     devices_changes[k] = (
                         'Changed device "{0}"'
                     ).format(k)
-                    obj.devices[k] = v
+                    obj.devices[k] = newdevices[k]
                 else:
                     devices_changes[k] = (
                         'Would change device "{0}"'
