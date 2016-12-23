@@ -1470,7 +1470,7 @@ def container_device_delete(name, device_name, remote_addr=None,
     )
 
 
-def container_file_put(name, src, dst, recursive=False, remove_existing=False,
+def container_file_put(name, src, dst, recursive=False, overwrite=False,
                        mode=None, uid=None, gid=None, saltenv='base',
                        remote_addr=None,
                        cert=None, key=None, verify_cert=True):
@@ -1489,7 +1489,7 @@ def container_file_put(name, src, dst, recursive=False, remove_existing=False,
     recursive :
         Decent into src directory
 
-    remove_existing :
+    overwrite :
         Replace destination if it exists
 
     mode :
@@ -1595,7 +1595,7 @@ def container_file_put(name, src, dst, recursive=False, remove_existing=False,
         # Source is a file
         if dst_is_directory:
             dst = os.path.join(dst, os.path.basename(src))
-            if not remove_existing:
+            if not overwrite:
                 found = True
                 try:
                     container.files.get(os.path.join(dst))
@@ -1609,7 +1609,7 @@ def container_file_put(name, src, dst, recursive=False, remove_existing=False,
                     found = False
                 if found:
                     raise SaltInvocationError(
-                        "Destination exists and remove_existing is false"
+                        "Destination exists and overwrite is false"
                     )
         if mode is not None or uid is not None or gid is not None:
             # Need to get file stats
@@ -1651,14 +1651,14 @@ def container_file_put(name, src, dst, recursive=False, remove_existing=False,
                 # cp -r /src/dir1 /scr/dir1
                 # cp -r /src/dir1 /scr/dir2
                 idx = len(src)
-                remove_existing = True
+                overwrite = True
         except pylxd.exceptions.NotFound:
             pass
 
     # Copy src directory recursive
-    if not remove_existing:
+    if not overwrite:
         raise SaltInvocationError(
-            "Destination exists and remove_existing is false"
+            "Destination exists and overwrite is false"
         )
 
     # Collect all directories first, to create them in one call
@@ -1697,7 +1697,7 @@ def container_file_put(name, src, dst, recursive=False, remove_existing=False,
     return True
 
 
-def container_file_get(name, src, dst, remove_existing=False,
+def container_file_get(name, src, dst, overwrite=False,
                        mode=None, uid=None, gid=None, remote_addr=None,
                        cert=None, key=None, verify_cert=True):
     '''
@@ -1770,9 +1770,9 @@ def container_file_get(name, src, dst, remove_existing=False,
         )
 
     if os.path.exists(dst):
-        if not remove_existing:
+        if not overwrite:
             raise SaltInvocationError(
-                'Destination exists and remove_existing is false.'
+                'Destination exists and overwrite is false.'
             )
         if not os.path.isfile(dst):
             raise SaltInvocationError(
