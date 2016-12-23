@@ -23,8 +23,22 @@ Before we forget it, `LXD`_ and this formula allows you to
 TODOS
 =====
 
-- Add suppport for file pull/push (with salt:// support).
-- Add support for container_exec.
+- For container states (_states/lxd_container.py)
+
+ * Add support file put (including salt:// scheme)
+ * Add support file get
+ * Add support execute
+
+The functionality for this is available in the module:
+
+.. code-block:: bash
+
+   salt <minion> lxd.container_put <name> host_src container_dst [mode=0600] [uid=0] [gid=0]
+
+   salt <minion> lxd.container_get <name> container_src host_dst
+
+   salt <minion> lxd.container_execute <name> '["ls", "-l"]'
+
 
 
 Requirements

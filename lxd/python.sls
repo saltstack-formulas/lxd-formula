@@ -32,7 +32,11 @@ lxd_python:
   {% if datamap.python.use_pip %}
   pip:
     - {{ datamap.python.pip_package.action }}
+    {% if datamap.python.get('pip_version') %}
     - name: pylxd=={{ datamap.python.pip_version }}
+    {% else %}
+    - name: pylxd
+    {% endif %}
     - reload_modules: True
     - require:
       - pkg: lxd_python_pip
