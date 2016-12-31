@@ -1171,16 +1171,26 @@ def container_migrate(name,
         name, src_remote_addr, src_cert, src_key, src_verify_cert, _raw=True
     )
 
-    was_running = container.status_code == CONTAINER_STATUS_RUNNING
-    if stop_and_start and was_running:
-        container.stop(wait=True)
-
     dest_client = pylxd_client_get(
         remote_addr, cert, key, verify_cert
     )
 
+    for pname in container.profiles:
+        try:
+            dest_client.profiles.get(pname)
+        except pylxd.exceptions.LXDAPIException:
+            raise SaltInvocationError(
+                'not all the profiles from the source exist on the target'
+            )
+
+    was_running = container.status_code == CONTAINER_STATUS_RUNNING
+    if stop_and_start and was_running:
+        container.stop(wait=True)
+
     try:
         dest_container = container.migrate(dest_client, wait=True)
+        dest_container.profiles = container.profiles
+        dest_container.save()
     except pylxd.exceptions.LXDAPIException as e:
         raise CommandExecutionError(str(e))
 
