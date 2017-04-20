@@ -36,6 +36,7 @@ several functions to help manage it and its containers.
 from __future__ import absolute_import, print_function
 import os
 from distutils.version import LooseVersion
+from datetime import datetime
 
 # Import salt libs
 import salt.utils.decorators
@@ -3140,6 +3141,60 @@ def image_alias_delete(image,
 
     return True
 
+#####################
+# Snapshot Management
+#####################
+def snapshots_all(container=None, remote_addr=None,
+                    cert=None, key=None, verify_cert=True):
+    containers = container_get(
+        container, remote_addr, cert, key, verify_cert, _raw=True
+    )
+    if container:
+        containers = [containers]
+    ret = {}
+    for cont in containers:
+        ret.update({cont.name : [{'name' : c.name} for c in cont.snapshots.all()]})
+    
+    return ret
+
+def snapshots_create(container, name=None, remote_addr=None,
+                    cert=None, key=None, verify_cert=True):
+    cont = container_get(
+        container, remote_addr, cert, key, verify_cert, _raw=True
+    )
+    if not name:
+        name = datetime.now().strftime('%Y%m%d%H%M%S')
+        
+    snap = cont.snapshots.create(name)
+    
+    for c in snapshots_all(container).get(container):
+        if c.get('name') == name:
+            return {'name' : name}
+
+    return {'name' : False}
+
+def snapshots_delete(container, name, remote_addr=None,
+                    cert=None, key=None, verify_cert=True):
+    cont = container_get(
+        container, remote_addr, cert, key, verify_cert, _raw=True
+    )
+    
+    try:
+        for s in cont.snapshots.all():
+            if s.name == name:
+                s.delete()
+                return True
+    except:
+        pass
+    
+    return False
+    
+def snapshots_get(container, name, remote_addr=None,
+                    cert=None, key=None, verify_cert=True):
+    container = container_get(
+        container, remote_addr, cert, key, verify_cert, _raw=True
+    )
+    return (container.snapshots.get(name))
 
 ################
 # Helper Methods
