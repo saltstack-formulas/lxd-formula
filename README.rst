@@ -2,20 +2,20 @@
 LXD
 ===
 
-`LXD`_ is a container "hypervisor". This formulas provides
+`LXD`_ is a container "hypervisor". This formula provides
 several states to help manage it and its containers.
 
 This formula will allow you to:
 
-- Initialize LXD with storage, authentication and network settings.
+- Initialize LXD with storage, authentication, and network settings.
 - Create some default settings for containers (profiles).
 - Pull an image from various sources.
 - Create a container with an image.
 - Start/Stop/Restart/Freeze/Unfreeze/Migrate a container.
-- And finaly undo all of the above.
+- And finally undo all of the above.
 
 Before we forget it, `LXD`_ and this formula allows you to
-**migrate unprivliged containers** from one host to another!
+**migrate unprivileged containers** from one host to another!
 
 .. _LXD: https://linuxcontainers.org/lxd/
 
@@ -87,13 +87,13 @@ Does everthing below.
 ``lxd.lxd``
 -----------
 
-Installs lxd manages its settings.
+Installs lxd, manages its settings.
 
 
 Minimal examples
 ++++++++++++++++
 
-To not listen on the network and use the default storage engine
+To not listen on the network and use the default storage engine:
 
 .. code-block:: yaml
 
@@ -138,7 +138,7 @@ Config examples
           network_port: "8443"
 
 
-        # Lets say you configured the password wrong on init or want to change it:
+        # Lets say you configured the password wrong on init, or want to change it:
         config:
           password:
             key: core.trust_password
@@ -146,7 +146,7 @@ Config examples
             force_password: True    # Currently this will be executed every time
                                     # you execute this state.
 
-        # Now lets say somewhere else you want to change the ip LXD is listening one
+        # Now lets say somewhere else you want to change the ip LXD is listening on
           network:
             key: core.https_address
             value: "[fd57:1:see:bad:c0de::14]:8443"
@@ -234,9 +234,9 @@ A remote we try to authenticate to
 ----------------
 
 Manages LXD profiles, profiles are something like defaults for a container,
-you can add multible profiles to a single container.
+you can add multiple profiles to a single container.
 
-Its general a good idea to look how profiles look on the `wire`_:
+It's general a good idea to look how profiles look on the `wire`_:
 
 .. _wire: https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-10
 
@@ -259,7 +259,7 @@ A local profile that enables autostart
 
     lxd:
       profiles:
-        local:    # local is special it means local unix socket, not authentication needed.
+        local:    # local is special, it means local unix socket, no authentication needed.
           autostart:
             config:
               # Enable autostart
@@ -288,8 +288,8 @@ The same profile on the "named" remote "srv01"
               boot.autostart.priority: 1
 
 
-A local profile that adds a interface
-+++++++++++++++++++++++++++++++++++++
+A local profile that adds an interface
+++++++++++++++++++++++++++++++++++++++
 
 .. code-block:: yaml
 
@@ -347,7 +347,7 @@ See `stgraber's blog`_
 MongoDB special case
 ++++++++++++++++++++
 
-If you use the MongoDB ext_pillar you will notice that it doesn't like
+If you use the MongoDB _ext_pillar_, you will notice that it doesn't like
 dots in field names, this is why we added a special case for that:
 
 .. code-block:: yaml
@@ -402,7 +402,7 @@ To create an image from file on host 'local'
 To create an image from the provided "images" remote
 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-On `images.linuxcontainers.org`_ you see a list of images available.
+On `images.linuxcontainers.org`_ you see a list of available images.
 
 .. _images.linuxcontainers.org: http://images.linuxcontainers.org/
 
@@ -460,7 +460,7 @@ To create an image from an URL
             source:
               type: url
               url: https://dl.stgraber.org/lxd
-            aliases: ['busbox-amd64']  # More aliases
+            aliases: ['busybox-amd64']  # More aliases
             public: False
             auto_update: True
 
@@ -468,7 +468,7 @@ To create an image from an URL
 ``lxd.containers``
 ------------------
 
-Manages LXD containers, this includes `lxd.images`, `lxd.profiles` and `lxd.remotes`.
+Manages LXD containers, this includes `lxd.images`, `lxd.profiles`, and `lxd.remotes`.
 
 
 To create a container and start it
@@ -514,8 +514,8 @@ We also add a higher start priority and a device eth1
                 - lxd_profile: lxd_profile_local_autostart
 
 
-Later you might want migrate "ubuntu-xenial" to "srv01"
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Later you might want to migrate "ubuntu-xenial" to "srv01"
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. code-block:: yaml
 
@@ -529,8 +529,8 @@ Later you might want migrate "ubuntu-xenial" to "srv01"
                                 # else this wont work!
 
 
-And finaly send it to /dev/null
-+++++++++++++++++++++++++++++++
+And finally send it to /dev/null
+++++++++++++++++++++++++++++++++
 
 .. code-block:: yaml
 
