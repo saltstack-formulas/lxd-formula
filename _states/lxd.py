@@ -144,7 +144,7 @@ def init(storage_backend='dir', trust_password=None, network_address=None,
             storage_pool if storage_pool else None
         )
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
 
     return _success(ret, 'Initialized the LXD Daemon')
 
@@ -175,7 +175,7 @@ def config_managed(name, value, force_password=False):
     try:
         current_value = __salt__['lxd.config_get'](name)
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
 
     if (name == _password_config_key and
             (not force_password or not current_value)):
@@ -185,7 +185,7 @@ def config_managed(name, value, force_password=False):
         )
         return _success(ret, msg)
 
-    elif str(value) == current_value:
+    elif six.text_type(value) == current_value:
         msg = ('"{0}" is already set to "{1}"'.format(name, value))
         return _success(ret, msg)
 
@@ -213,7 +213,7 @@ def config_managed(name, value, force_password=False):
                 )
             }
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
 
     return _success(ret, result_msg)
 
@@ -271,9 +271,9 @@ def authenticate(remote_addr, password, cert, key, verify_cert=True, name=''):
             remote_addr, cert, key, verify_cert
         )
     except SaltInvocationError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
 
     if client.trusted:
         return _success(ret, "Already authenticated.")
@@ -283,7 +283,7 @@ def authenticate(remote_addr, password, cert, key, verify_cert=True, name=''):
             remote_addr, password, cert, key, verify_cert
         )
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
 
     if result is not True:
         return _error(

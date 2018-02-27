@@ -9,7 +9,7 @@ several functions to help manage it and its containers.
 
 .. note:
 
-    - `pylxd(2)`__ version 2 is required to let this work,
+    - `pylxd(2)`__ version >=2.2.5 is required to let this work,
       currently only available via pip.
 
         To install on Ubuntu:
@@ -60,7 +60,7 @@ __docformat__ = 'restructuredtext en'
 # PEP8
 __salt__ = {}
 
-_pylxd_minimal_version = "2.0.4"
+_pylxd_minimal_version = "2.2.5"
 
 # Keep in sync with: https://github.com/lxc/lxd/blob/master/shared/osarch/architectures.go  # noqa
 _architectures = {
@@ -85,7 +85,6 @@ _connection_pool = {}
 
 def __virtual__():
     if PYLXD_AVAILABLE:
-        # Increment this once we use the new features of PyLXD (images!)
         if (LooseVersion(pylxd_version()) <
                 LooseVersion(_pylxd_minimal_version)):
             return (
@@ -212,7 +211,7 @@ def init(storage_backend='dir', trust_password=None, network_address=None,
         output = __salt__['cmd.run'](cmd)
     except ValueError as e:
         raise CommandExecutionError(
-            "Failed to call: '{0}', error was: {1}".format(cmd, str(e)),
+            "Failed to call: '{0}', error was: {1}".format(cmd, six.text_type(e)),
         )
 
     if 'error:' in output:
@@ -291,7 +290,7 @@ def config_get(key):
 #######################
 # Connection Management
 #######################
-def pylxd_client_get(remote_addr=None, cert=None, key=None, verify_cert=True):
+def _client_get(remote_addr=None, cert=None, key=None, verify_cert=True):
     '''
     Get an pyxld client, this is not ment to be runned over the CLI.
 
@@ -392,7 +391,7 @@ def pylxd_client_get(remote_addr=None, cert=None, key=None, verify_cert=True):
         raise CommandExecutionError(
             ('Failed to connect to "{0}",'
              ' looks like the SSL verification failed, error was: {1}'
-             ).format(remote_addr, str(e))
+             ).format(remote_addr, six.text_type(e))
         )
 
     _connection_pool[pool_key] = client
@@ -400,7 +399,7 @@ def pylxd_client_get(remote_addr=None, cert=None, key=None, verify_cert=True):
     return client
 
 
-def pylxd_save_object(obj):
+def _save_object(obj):
     ''' Saves an object (profile/image/container) and
         translate its execpetion on failure
 
@@ -412,7 +411,7 @@ def pylxd_save_object(obj):
     try:
         obj.save()
     except pylxd.exceptions.LXDAPIException as e:
-        raise CommandExecutionError(str(e))
+        raise CommandExecutionError(six.text_type(e))
 
     return True
 
@@ -460,7 +459,7 @@ def authenticate(remote_addr, password, cert, key, verify_cert=True):
 
     # noqa
     '''
-    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    client = _client_get(remote_addr, cert, key, verify_cert)
 
     if client.trusted:
         return True
@@ -469,7 +468,7 @@ def authenticate(remote_addr, password, cert, key, verify_cert=True):
         client.authenticate(password)
     except pylxd.exceptions.LXDAPIException as e:
         # Wrong password
-        raise CommandExecutionError(str(e))
+        raise CommandExecutionError(six.text_type(e))
 
     return client.trusted
 
@@ -529,7 +528,7 @@ def container_list(list_names=False, remote_addr=None,
     # noqa
     '''
 
-    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    client = _client_get(remote_addr, cert, key, verify_cert)
     containers = client.containers.all()
     if list_names:
         return [c.name for c in containers]
@@ -634,7 +633,7 @@ def container_create(name, source, profiles=['default'],
 
     # See: https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
     '''
-    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    client = _client_get(remote_addr, cert, key, verify_cert)
 
     if not isinstance(profiles, (list, tuple, set,)):
         raise SaltInvocationError(
@@ -669,7 +668,7 @@ def container_create(name, source, profiles=['default'],
         )
     except pylxd.exceptions.LXDAPIException as e:
         raise CommandExecutionError(
-            str(e)
+            six.text_type(e)
         )
 
     if not wait:
@@ -721,7 +720,7 @@ def container_get(name=None, remote_addr=None,
         _raw :
             Return the pylxd object, this is internal and by states in use.
     '''
-    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    client = _client_get(remote_addr, cert, key, verify_cert)
 
     if name is None:
         containers = client.containers.all()
@@ -865,7 +864,7 @@ def container_state(name=None, remote_addr=None,
         but in the most cases you want to set it off as LXD
         normaly uses self-signed certificates.
     '''
-    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    client = _client_get(remote_addr, cert, key, verify_cert)
 
     if name is None:
         containers = client.containers.all()
@@ -1172,7 +1171,7 @@ def container_migrate(name,
         name, src_remote_addr, src_cert, src_key, src_verify_cert, _raw=True
     )
 
-    dest_client = pylxd_client_get(
+    dest_client = _client_get(
         remote_addr, cert, key, verify_cert
     )
 
@@ -1193,7 +1192,7 @@ def container_migrate(name,
         dest_container.profiles = container.profiles
         dest_container.save()
     except pylxd.exceptions.LXDAPIException as e:
-        raise CommandExecutionError(str(e))
+        raise CommandExecutionError(six.text_type(e))
 
     # Remove the source container
     container.delete(wait=True)
@@ -1558,7 +1557,7 @@ def container_file_put(name, src, dst, recursive=False, overwrite=False,
     # Fix mode. Salt commandline doesn't use octals, so 0600 will be
     # the decimal integer 600 (and not the octal 0600). So, it it's
     # and integer, handle it as if it where a octal representation.
-    mode = str(mode)
+    mode = six.text_type(mode)
     if not mode.startswith('0'):
         mode = '0{0}'.format(mode)
 
@@ -1597,7 +1596,7 @@ def container_file_put(name, src, dst, recursive=False, overwrite=False,
         dst_is_directory = False
         container.files.get(os.path.join(dst, '.'))
     except pylxd.exceptions.LXDAPIException as why:
-        if str(why).find('Is a directory') >= 0:
+        if six.text_type(why).find('Is a directory') >= 0:
             dst_is_directory = True
     except pylxd.exceptions.NotFound:
         pass
@@ -1611,7 +1610,7 @@ def container_file_put(name, src, dst, recursive=False, overwrite=False,
                 try:
                     container.files.get(os.path.join(dst))
                 except pylxd.exceptions.LXDAPIException as why:
-                    if str(why).find('not found') >= 0:
+                    if six.text_type(why).find('not found') >= 0:
                         # Old version of pylxd
                         found = False
                     else:
@@ -1656,7 +1655,7 @@ def container_file_put(name, src, dst, recursive=False, overwrite=False,
         try:
             container.files.get(os.path.join(os.path.dirname(dst), '.'))
         except pylxd.exceptions.LXDAPIException as why:
-            if str(why).find('Is a directory') >= 0:
+            if six.text_type(why).find('Is a directory') >= 0:
                 dst_is_directory = True
                 # destination is non-existent
                 # cp -r /src/dir1 /scr/dir1
@@ -1761,7 +1760,7 @@ def container_file_get(name, src, dst, overwrite=False,
     # Fix mode. Salt commandline doesn't use octals, so 0600 will be
     # the decimal integer 600 (and not the octal 0600). So, it it's
     # and integer, handle it as if it where a octal representation.
-    mode = str(mode)
+    mode = six.text_type(mode)
     if not mode.startswith('0'):
         mode = '0{0}'.format(mode)
 
@@ -1915,7 +1914,7 @@ def profile_list(list_names=False, remote_addr=None,
             salt '*' lxd.profile_list --out=json
     '''
 
-    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    client = _client_get(remote_addr, cert, key, verify_cert)
 
     profiles = client.profiles.all()
     if list_names:
@@ -1983,7 +1982,7 @@ def profile_create(name, config=None, devices=None, description=None,
 
         # noqa
     '''
-    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    client = _client_get(remote_addr, cert, key, verify_cert)
 
     config, devices = normalize_input_values(
         config,
@@ -1993,7 +1992,7 @@ def profile_create(name, config=None, devices=None, description=None,
     profile = client.profiles.create(name, config, devices)
     if description is not None:
         profile.description = description
-        pylxd_save_object(profile)
+        _save_object(profile)
 
     return _pylxd_model_to_dict(profile)
 
@@ -2039,7 +2038,7 @@ def profile_get(name, remote_addr=None,
 
             $ salt '*' lxd.profile_get autostart
     '''
-    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    client = _client_get(remote_addr, cert, key, verify_cert)
 
     profile = None
     try:
@@ -2492,7 +2491,7 @@ def image_list(list_aliases=False, remote_addr=None,
             $ salt '*' lxd.image_list true --out=json
             $ salt '*' lxd.image_list --out=json
     '''
-    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    client = _client_get(remote_addr, cert, key, verify_cert)
 
     images = client.images.all()
     if list_aliases:
@@ -2546,7 +2545,7 @@ def image_get(fingerprint,
 
             $ salt '*' lxd.image_get <fingerprint>
     '''
-    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    client = _client_get(remote_addr, cert, key, verify_cert)
 
     image = None
     try:
@@ -2607,7 +2606,7 @@ def image_get_by_alias(alias,
 
             $ salt '*' lxd.image_get_by_alias xenial/amd64
     '''
-    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    client = _client_get(remote_addr, cert, key, verify_cert)
 
     image = None
     try:
@@ -2735,7 +2734,7 @@ def image_from_simplestreams(server,
 
         # noqa
     '''
-    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    client = _client_get(remote_addr, cert, key, verify_cert)
     image = client.images.create_from_simplestreams(
         server, alias, public=public, auto_update=auto_update
     )
@@ -2809,7 +2808,7 @@ def image_from_url(url,
 
         # noqa
     '''
-    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    client = _client_get(remote_addr, cert, key, verify_cert)
     image = client.images.create_from_url(
         url, public=public, auto_update=auto_update
     )
@@ -2888,7 +2887,7 @@ def image_from_file(filename,
     with open(cached_file, 'r+b') as fp:
         data = fp.read()
 
-    client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    client = _client_get(remote_addr, cert, key, verify_cert)
     image = client.images.create(data, public=public, wait=True)
 
     # Aliases support
@@ -3008,7 +3007,7 @@ def image_copy_lxd(source,
         )
 
     # Will fail with a CommandExecutionError on connection problems.
-    dest_client = pylxd_client_get(remote_addr, cert, key, verify_cert)
+    dest_client = _client_get(remote_addr, cert, key, verify_cert)
 
     dest_image = src_image.copy(
         dest_client, public=public, auto_update=auto_update, wait=True
@@ -3444,9 +3443,9 @@ def _set_property_dict_item(obj, prop, key, value):
         attr[key] = value
 
     else:  # config
-        attr[key] = str(value)
+        attr[key] = six.text_typevalue)
 
-    pylxd_save_object(obj)
+    _save_object(obj)
 
     return _pylxd_model_to_dict(obj)
 
@@ -3469,7 +3468,7 @@ def _delete_property_dict_item(obj, prop, key):
         )
 
     del attr[key]
-    pylxd_save_object(obj)
+    _save_object(obj)
 
     return True
 
@@ -3544,9 +3543,9 @@ class FilesManager(Container.FilesManager):
         if mode is not None:
             headers['X-LXD-mode'] = mode
         if uid is not None:
-            headers['X-LXD-uid'] = str(uid)
+            headers['X-LXD-uid'] = six.text_type(uid)
         if gid is not None:
-            headers['X-LXD-gid'] = str(gid)
+            headers['X-LXD-gid'] = six.text_type(gid)
         response = self._client.api.containers[
             self._container.name].files.post(
             params={'path': filepath}, data=data, headers=headers)

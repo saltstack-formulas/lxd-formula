@@ -124,7 +124,7 @@ def present(name, description=None, config=None, devices=None,
             name, remote_addr, cert, key, verify_cert, _raw=True
         )
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
     except SaltInvocationError as e:
         # Profile not found
         pass
@@ -153,7 +153,7 @@ def present(name, description=None, config=None, devices=None,
             )
 
         except CommandExecutionError as e:
-            return _error(ret, str(e))
+            return _error(ret, six.text_type(e))
 
         msg = 'Profile "{0}" has been created'.format(name)
         ret['changes'] = {'created': msg}
@@ -191,7 +191,7 @@ def present(name, description=None, config=None, devices=None,
     try:
         __salt__['lxd.pylxd_save_object'](profile)
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
 
     return _success(ret, '{0} changes'.format(len(ret['changes'].keys())))
 
@@ -249,7 +249,7 @@ def absent(name, remote_addr=None, cert=None,
                 name, remote_addr, cert, key, verify_cert
             )
         except CommandExecutionError as e:
-            return _error(ret, str(e))
+            return _error(ret, six.text_type(e))
         except SaltInvocationError as e:
             # Profile not found
             return _success(ret, 'Profile "{0}" not found.'.format(name))
@@ -265,7 +265,7 @@ def absent(name, remote_addr=None, cert=None,
             name, remote_addr, cert, key, verify_cert
         )
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
     except SaltInvocationError as e:
         # Profile not found
         return _success(ret, 'Profile "{0}" not found.'.format(name))

@@ -186,7 +186,7 @@ def present(name,
             name, remote_addr, cert, key, verify_cert, _raw=True
         )
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
     except SaltInvocationError as e:
         # Profile not found
         pass
@@ -224,7 +224,7 @@ def present(name,
                 verify_cert
             )
         except CommandExecutionError as e:
-            return _error(ret, str(e))
+            return _error(ret, six.text_type(e))
 
         msg = 'Created the container "{0}"'.format(name)
         ret['changes'] = {
@@ -241,7 +241,7 @@ def present(name,
                     verify_cert
                 )
             except CommandExecutionError as e:
-                return _error(ret, str(e))
+                return _error(ret, six.text_type(e))
 
             msg = msg + ' and started it.'
             ret['changes'] = {
@@ -297,7 +297,7 @@ def present(name,
         try:
             __salt__['lxd.pylxd_save_object'](container)
         except CommandExecutionError as e:
-            return _error(ret, str(e))
+            return _error(ret, six.text_type(e))
 
     if running != is_running:
         if running is True:
@@ -415,7 +415,7 @@ def absent(name,
             name, remote_addr, cert, key, verify_cert, _raw=True
         )
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
     except SaltInvocationError as e:
         # Container not found
         return _success(ret, 'Container "{0}" not found.'.format(name))
@@ -494,7 +494,7 @@ def running(name,
             name, remote_addr, cert, key, verify_cert, _raw=True
         )
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
     except SaltInvocationError as e:
         # Container not found
         return _error(ret, 'Container "{0}" not found'.format(name))
@@ -590,7 +590,7 @@ def frozen(name,
             name, remote_addr, cert, key, verify_cert, _raw=True
         )
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
     except SaltInvocationError as e:
         # Container not found
         return _error(ret, 'Container "{0}" not found'.format(name))
@@ -691,7 +691,7 @@ def stopped(name,
             name, remote_addr, cert, key, verify_cert, _raw=True
         )
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
     except SaltInvocationError as e:
         # Container not found
         return _error(ret, 'Container "{0}" not found'.format(name))
@@ -805,7 +805,7 @@ def migrated(name,
             verify_cert, _raw=True
         )
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
     except SaltInvocationError as e:
         # Destination container not found
         pass
@@ -824,7 +824,7 @@ def migrated(name,
             name, src_remote_addr, src_cert, src_key, src_verify_cert, _raw=True
         )
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
     except SaltInvocationError as e:
         # Container not found
         return _error(ret, 'Source Container "{0}" not found'.format(name))
@@ -841,7 +841,7 @@ def migrated(name,
             verify_cert, src_remote_addr, src_cert, src_key, src_verify_cert
         )
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
 
     ret['changes']['migrated'] = (
         'Migrated the container "{0}" from "{1}" to "{2}"'

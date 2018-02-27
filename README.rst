@@ -48,9 +48,9 @@ Requirements
   you need Ubuntu.
 - This has been tested with Saltstack `2016.3.1`, we don't know if it
   works with other versions.
-- `PyLXD`_ version 2.0.5 from PIP (enable use_pip and it will get that version!).
+- `PyLXD`_ version 2.2.5 from PIP (enable use_pip and it will get that version!).
 
-.. _PyLXD: https://github.com/pcdummy/pylxd
+.. _PyLXD: https://github.com/lxc/pylxd
 .. _169: https://github.com/lxc/pylxd/pull/169
 
 Installation
@@ -69,7 +69,7 @@ Per git remote
 .. code-block:: yaml
 
     gitfs_remotes:
-      - https://github.com/pcdummy/saltstack-lxd-formula.git
+      - https://github.com/saltstack-formulas/saltstack-lxd-formula.git
 
 
 Available states

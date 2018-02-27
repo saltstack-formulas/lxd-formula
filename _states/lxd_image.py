@@ -177,7 +177,7 @@ def present(name,
             name, remote_addr, cert, key, verify_cert, _raw=True
         )
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
     except SaltInvocationError as e:
         # Image not found
         pass
@@ -249,7 +249,7 @@ def present(name,
                     _raw=True
                 )
         except CommandExecutionError as e:
-            return _error(ret, str(e))
+            return _error(ret, six.text_type(e))
 
     # Sync aliases
     if name not in aliases:
@@ -348,14 +348,14 @@ def absent(name,
             name, remote_addr, cert, key, verify_cert, _raw=True
         )
     except CommandExecutionError as e:
-        return _error(ret, str(e))
+        return _error(ret, six.text_type(e))
     except SaltInvocationError as e:
         try:
             image = __salt__['lxd.image_get'](
                 name, remote_addr, cert, key, verify_cert, _raw=True
             )
         except CommandExecutionError as e:
-            return _error(ret, str(e))
+            return _error(ret, six.text_type(e))
         except SaltInvocationError as e:
             return _success(ret, 'Image "{0}" not found.'.format(name))
 
