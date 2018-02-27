@@ -2,7 +2,7 @@
 '''
 Manage LXD images.
 
-.. versionadded:: unknown
+.. versionadded:: Fluorine
 
 .. note:
 
@@ -35,12 +35,9 @@ from __future__ import absolute_import, print_function, unicode_literals
 from salt.exceptions import CommandExecutionError
 from salt.exceptions import SaltInvocationError
 import salt.ext.six as six
+from salt.ext.six.moves import map
 
 __docformat__ = 'restructuredtext en'
-
-# PEP8
-__opts__ = {}
-__salt__ = {}
 
 __virtualname__ = 'lxd_image'
 
@@ -54,7 +51,7 @@ def __virtual__():
 
 def present(name,
             source,
-            aliases=[],
+            aliases=None,
             public=None,
             auto_update=None,
             remote_addr=None,
@@ -154,6 +151,9 @@ def present(name,
         but in the most cases you want to set it off as LXD
         normaly uses self-signed certificates.
     '''
+    if aliases is None:
+        aliases = []
+
     # Create a copy of aliases, since we're modifying it here
     aliases = aliases[:]
     ret = {

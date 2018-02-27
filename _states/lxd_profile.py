@@ -2,7 +2,7 @@
 '''
 Manage LXD profiles.
 
-.. versionadded:: unknown
+.. versionadded:: Fluorine
 
 .. note:
 
@@ -37,10 +37,6 @@ from salt.exceptions import SaltInvocationError
 import salt.ext.six as six
 
 __docformat__ = 'restructuredtext en'
-
-# PEP8
-__salt__ = {}
-__opts__ = {}
 
 __virtualname__ = 'lxd_profile'
 

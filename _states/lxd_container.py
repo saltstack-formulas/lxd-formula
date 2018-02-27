@@ -2,7 +2,7 @@
 '''
 Manage LXD containers.
 
-.. versionadded:: unknown
+.. versionadded:: Fluorine
 
 .. note:
 
@@ -35,12 +35,9 @@ from __future__ import absolute_import, print_function, unicode_literals
 from salt.exceptions import CommandExecutionError
 from salt.exceptions import SaltInvocationError
 import salt.ext.six as six
+from salt.ext.six.moves import map
 
 __docformat__ = 'restructuredtext en'
-
-# PEP8
-__opts__ = {}
-__salt__ = {}
 
 __virtualname__ = 'lxd_container'
 
@@ -59,7 +56,7 @@ def __virtual__():
 
 def present(name,
             running=None,
-            source={},
+            source=None,
             profiles=['default'],
             config=None,
             devices=None,
@@ -82,7 +79,7 @@ def present(name,
         * If ``None``, do nothing with regards to the running state of the
           container
 
-    source : {}
+    source : None
         Can be either a string containing an image alias:
              "xenial/amd64"
         or an dict with type "image" with alias:
@@ -162,6 +159,9 @@ def present(name,
         but in the most cases you want to set it off as LXD
         normaly uses self-signed certificates.
     '''
+    if source is None:
+        source = {}
+
     ret = {
         'name': name,
         'running': running,

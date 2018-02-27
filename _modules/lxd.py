@@ -2,7 +2,7 @@
 '''
 Module for managing the LXD daemon and its containers.
 
-.. versionadded:: unknown
+.. versionadded:: Fluorine
 
 `LXD(1)`__ is a container "hypervisor". This execution module provides
 several functions to help manage it and its containers.
@@ -43,6 +43,7 @@ import salt.utils.decorators
 from salt.exceptions import CommandExecutionError
 from salt.exceptions import SaltInvocationError
 import salt.ext.six as six
+from salt.ext.six.moves import map
 
 # Import 3rd-party libs
 try:
@@ -56,9 +57,6 @@ import logging
 log = logging.getLogger(__name__)
 
 __docformat__ = 'restructuredtext en'
-
-# PEP8
-__salt__ = {}
 
 _pylxd_minimal_version = "2.2.5"
 
@@ -3443,7 +3441,7 @@ def _set_property_dict_item(obj, prop, key, value):
         attr[key] = value
 
     else:  # config
-        attr[key] = six.text_typevalue)
+        attr[key] = six.text_type(value)
 
     _save_object(obj)
 
