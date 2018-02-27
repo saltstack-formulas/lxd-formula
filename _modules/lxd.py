@@ -33,7 +33,7 @@ several functions to help manage it and its containers.
 '''
 
 # Import python libs
-from __future__ import absolute_import, print_function
+from __future__ import absolute_import, print_function, unicode_literals
 import os
 from distutils.version import LooseVersion
 from datetime import datetime
@@ -62,7 +62,7 @@ __salt__ = {}
 
 _pylxd_minimal_version = "2.0.4"
 
-# Keep in sync with: https://github.com/lxc/lxd/blob/master/shared/architectures.go  # noqa
+# Keep in sync with: https://github.com/lxc/lxd/blob/master/shared/osarch/architectures.go  # noqa
 _architectures = {
     'unknown': '0',
     'i686': '1',
@@ -75,7 +75,7 @@ _architectures = {
     's390x': '8'
 }
 
-# Keep in sync with: https://github.com/lxc/lxd/blob/master/shared/status.go
+# Keep in sync with: https://github.com/lxc/lxd/blob/master/shared/api/status_code.go
 CONTAINER_STATUS_RUNNING = 103
 
 __virtualname__ = 'lxd'
@@ -1675,7 +1675,7 @@ def container_file_put(name, src, dst, recursive=False, overwrite=False,
     # Collect all directories first, to create them in one call
     # (for performance reasons)
     dstdirs = []
-    for path, dirname, files in os.walk(src):
+    for path, _, files in os.walk(src):
         dstdir = os.path.join(dst, path[idx:].lstrip(os.path.sep))
         dstdirs.append(dstdir)
     container.execute(['mkdir', '-p'] + dstdirs)
@@ -1684,7 +1684,7 @@ def container_file_put(name, src, dst, recursive=False, overwrite=False,
     set_uid = uid
     set_gid = gid
     # Now transfer the files
-    for path, dirname, files in os.walk(src):
+    for path, _, files in os.walk(src):
         dstdir = os.path.join(dst, path[idx:].lstrip(os.path.sep))
         for name in files:
             src_name = os.path.join(path, name)
@@ -3154,7 +3154,7 @@ def snapshots_all(container=None, remote_addr=None,
     ret = {}
     for cont in containers:
         ret.update({cont.name : [{'name' : c.name} for c in cont.snapshots.all()]})
-    
+
     return ret
 
 def snapshots_create(container, name=None, remote_addr=None,
@@ -3164,9 +3164,9 @@ def snapshots_create(container, name=None, remote_addr=None,
     )
     if not name:
         name = datetime.now().strftime('%Y%m%d%H%M%S')
-        
-    snap = cont.snapshots.create(name)
-    
+
+    cont.snapshots.create(name)
+
     for c in snapshots_all(container).get(container):
         if c.get('name') == name:
             return {'name' : name}
@@ -3178,7 +3178,7 @@ def snapshots_delete(container, name, remote_addr=None,
     cont = container_get(
         container, remote_addr, cert, key, verify_cert, _raw=True
     )
-    
+
     try:
         for s in cont.snapshots.all():
             if s.name == name:
@@ -3186,9 +3186,9 @@ def snapshots_delete(container, name, remote_addr=None,
                 return True
     except:
         pass
-    
+
     return False
-    
+
 def snapshots_get(container, name, remote_addr=None,
                     cert=None, key=None, verify_cert=True):
     container = container_get(
@@ -3507,7 +3507,7 @@ def _verify_image(image,
 def _pylxd_model_to_dict(obj):
     """Translates a plyxd model object to a dict"""
     marshalled = {}
-    for key, val in obj.__attributes__.items():
+    for key in obj.__attributes__.keys():
         if hasattr(obj, key):
             marshalled[key] = getattr(obj, key)
     return marshalled
