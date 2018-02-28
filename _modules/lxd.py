@@ -35,15 +35,16 @@ several functions to help manage it and its containers.
 # Import python libs
 from __future__ import absolute_import, print_function, unicode_literals
 import os
-from distutils.version import LooseVersion
 from datetime import datetime
 
 # Import salt libs
 import salt.utils.decorators
+from salt.utils.versions import LooseVersion
 from salt.exceptions import CommandExecutionError
 from salt.exceptions import SaltInvocationError
 import salt.ext.six as six
 from salt.ext.six.moves import map
+from salt.ext.six.moves import zip
 
 # Import 3rd-party libs
 try:
@@ -73,7 +74,7 @@ _architectures = {
     's390x': '8'
 }
 
-# Keep in sync with: https://github.com/lxc/lxd/blob/master/shared/api/status_code.go
+# Keep in sync with: https://github.com/lxc/lxd/blob/master/shared/api/status_code.go  # noqa
 CONTAINER_STATUS_RUNNING = 103
 
 __virtualname__ = 'lxd'
@@ -209,7 +210,9 @@ def init(storage_backend='dir', trust_password=None, network_address=None,
         output = __salt__['cmd.run'](cmd)
     except ValueError as e:
         raise CommandExecutionError(
-            "Failed to call: '{0}', error was: {1}".format(cmd, six.text_type(e)),
+            "Failed to call: '{0}', error was: {1}".format(
+                cmd, six.text_type(e)
+            ),
         )
 
     if 'error:' in output:
@@ -534,8 +537,8 @@ def container_list(list_names=False, remote_addr=None,
     return map(_pylxd_model_to_dict, containers)
 
 
-def container_create(name, source, profiles=['default'],
-                     config={}, devices={}, architecture='x86_64',
+def container_create(name, source, profiles=None,
+                     config=None, devices=None, architecture='x86_64',
                      ephemeral=False, wait=True,
                      remote_addr=None, cert=None, key=None, verify_cert=True,
                      _raw=False):
@@ -631,6 +634,15 @@ def container_create(name, source, profiles=['default'],
 
     # See: https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1
     '''
+    if profiles is None:
+        profiles = ['default']
+
+    if config is None:
+        config = {}
+
+    if devices is None:
+        devices = {}
+
     client = _client_get(remote_addr, cert, key, verify_cert)
 
     if not isinstance(profiles, (list, tuple, set,)):
@@ -647,7 +659,7 @@ def container_create(name, source, profiles=['default'],
     if isinstance(source, six.string_types):
         source = {'type': 'image', 'alias': source}
 
-    config, devices, normalize_input_values(
+    config, devices = normalize_input_values(
         config,
         devices
     )
@@ -1593,11 +1605,11 @@ def container_file_put(name, src, dst, recursive=False, overwrite=False,
     try:
         dst_is_directory = False
         container.files.get(os.path.join(dst, '.'))
+    except pylxd.exceptions.NotFound:
+        pass
     except pylxd.exceptions.LXDAPIException as why:
         if six.text_type(why).find('Is a directory') >= 0:
             dst_is_directory = True
-    except pylxd.exceptions.NotFound:
-        pass
 
     if os.path.isfile(src):
         # Source is a file
@@ -1607,14 +1619,14 @@ def container_file_put(name, src, dst, recursive=False, overwrite=False,
                 found = True
                 try:
                     container.files.get(os.path.join(dst))
+                except pylxd.exceptions.NotFound:
+                    found = False
                 except pylxd.exceptions.LXDAPIException as why:
                     if six.text_type(why).find('not found') >= 0:
                         # Old version of pylxd
                         found = False
                     else:
                         raise
-                except pylxd.exceptions.NotFound:
-                    found = False
                 if found:
                     raise SaltInvocationError(
                         "Destination exists and overwrite is false"
@@ -1629,11 +1641,11 @@ def container_file_put(name, src, dst, recursive=False, overwrite=False,
             if gid is None:
                 gid = stat.st_gid
 
-        container.files.put(
-            dst, open(src, 'rb').read(),
-            mode=mode, uid=uid, gid=gid
-
-        )
+        with salt.utils.open(src, 'rb') as src_fp:
+            container.files.put(
+                dst, src_fp.read(),
+                mode=mode, uid=uid, gid=gid
+            )
         return True
     elif not os.path.isdir(src):
         raise SaltInvocationError(
@@ -1652,6 +1664,8 @@ def container_file_put(name, src, dst, recursive=False, overwrite=False,
         # and is a directory
         try:
             container.files.get(os.path.join(os.path.dirname(dst), '.'))
+        except pylxd.exceptions.NotFound:
+            pass
         except pylxd.exceptions.LXDAPIException as why:
             if six.text_type(why).find('Is a directory') >= 0:
                 dst_is_directory = True
@@ -1660,8 +1674,6 @@ def container_file_put(name, src, dst, recursive=False, overwrite=False,
                 # cp -r /src/dir1 /scr/dir2
                 idx = len(src)
                 overwrite = True
-        except pylxd.exceptions.NotFound:
-            pass
 
     # Copy src directory recursive
     if not overwrite:
@@ -1697,10 +1709,11 @@ def container_file_put(name, src, dst, recursive=False, overwrite=False,
                 if gid is None:
                     set_gid = stat.st_gid
 
-            container.files.put(
-                dst_name, open(src_name, 'rb').read(),
-                mode=set_mode, uid=set_uid, gid=set_gid
-            )
+            with salt.utils.open(src_name, 'rb') as src_fp:
+                container.files.put(
+                    dst_name, src_fp.read(),
+                    mode=set_mode, uid=set_uid, gid=set_gid
+                )
 
     return True
 
@@ -1793,7 +1806,10 @@ def container_file_get(name, src, dst, overwrite=False,
                 'No such file or directory \'{0}\''.format(dst_path)
             )
         dst = os.path.join(dst, os.path.basename(src))
-    open(dst, 'wb').write(container.files.get(src))
+
+    with salt.utils.open(dst, 'wb') as df:
+        df.write(container.files.get(src))
+
     if mode:
         os.chmod(dst, mode)
     if uid or uid is '0':
@@ -2675,7 +2691,7 @@ def image_from_simplestreams(server,
                              cert=None,
                              key=None,
                              verify_cert=True,
-                             aliases=[],
+                             aliases=None,
                              public=False,
                              auto_update=False,
                              _raw=False):
@@ -2732,6 +2748,9 @@ def image_from_simplestreams(server,
 
         # noqa
     '''
+    if aliases is None:
+        aliases = []
+
     client = _client_get(remote_addr, cert, key, verify_cert)
     image = client.images.create_from_simplestreams(
         server, alias, public=public, auto_update=auto_update
@@ -2752,7 +2771,7 @@ def image_from_url(url,
                    cert=None,
                    key=None,
                    verify_cert=True,
-                   aliases=[],
+                   aliases=None,
                    public=False,
                    auto_update=False,
                    _raw=False):
@@ -2806,6 +2825,9 @@ def image_from_url(url,
 
         # noqa
     '''
+    if aliases is None:
+        aliases = []
+
     client = _client_get(remote_addr, cert, key, verify_cert)
     image = client.images.create_from_url(
         url, public=public, auto_update=auto_update
@@ -2826,7 +2848,7 @@ def image_from_file(filename,
                     cert=None,
                     key=None,
                     verify_cert=True,
-                    aliases=[],
+                    aliases=None,
                     public=False,
                     saltenv='base',
                     _raw=False):
@@ -2880,9 +2902,12 @@ def image_from_file(filename,
 
         # noqa
     '''
+    if aliases is None:
+        aliases = []
+
     cached_file = __salt__['cp.cache_file'](filename, saltenv=saltenv)
     data = b''
-    with open(cached_file, 'r+b') as fp:
+    with salt.utils.open(cached_file, 'r+b') as fp:
         data = fp.read()
 
     client = _client_get(remote_addr, cert, key, verify_cert)
@@ -2907,7 +2932,7 @@ def image_copy_lxd(source,
                    cert,
                    key,
                    verify_cert=True,
-                   aliases=[],
+                   aliases=None,
                    public=None,
                    auto_update=None,
                    _raw=False):
@@ -2982,6 +3007,8 @@ def image_copy_lxd(source,
 
     # noqa
     '''
+    if aliases is None:
+        aliases = []
 
     log.debug(
         'Trying to copy the image "{0}" from "{1}" to "{2}"'.format(
@@ -3141,8 +3168,10 @@ def image_alias_delete(image,
 #####################
 # Snapshot Management
 #####################
+
+
 def snapshots_all(container=None, remote_addr=None,
-                    cert=None, key=None, verify_cert=True):
+                  cert=None, key=None, verify_cert=True):
     containers = container_get(
         container, remote_addr, cert, key, verify_cert, _raw=True
     )
@@ -3150,12 +3179,14 @@ def snapshots_all(container=None, remote_addr=None,
         containers = [containers]
     ret = {}
     for cont in containers:
-        ret.update({cont.name : [{'name' : c.name} for c in cont.snapshots.all()]})
+        ret.update({cont.name: [{'name': c.name}
+                                for c in cont.snapshots.all()]})
 
     return ret
 
+
 def snapshots_create(container, name=None, remote_addr=None,
-                    cert=None, key=None, verify_cert=True):
+                     cert=None, key=None, verify_cert=True):
     cont = container_get(
         container, remote_addr, cert, key, verify_cert, _raw=True
     )
@@ -3166,12 +3197,13 @@ def snapshots_create(container, name=None, remote_addr=None,
 
     for c in snapshots_all(container).get(container):
         if c.get('name') == name:
-            return {'name' : name}
+            return {'name': name}
 
-    return {'name' : False}
+    return {'name': False}
+
 
 def snapshots_delete(container, name, remote_addr=None,
-                    cert=None, key=None, verify_cert=True):
+                     cert=None, key=None, verify_cert=True):
     cont = container_get(
         container, remote_addr, cert, key, verify_cert, _raw=True
     )
@@ -3181,21 +3213,24 @@ def snapshots_delete(container, name, remote_addr=None,
             if s.name == name:
                 s.delete()
                 return True
-    except:
+    except pylxd.exceptions.LXDAPIException:
         pass
 
     return False
 
+
 def snapshots_get(container, name, remote_addr=None,
-                    cert=None, key=None, verify_cert=True):
+                  cert=None, key=None, verify_cert=True):
     container = container_get(
         container, remote_addr, cert, key, verify_cert, _raw=True
     )
-    return (container.snapshots.get(name))
+    return container.snapshots.get(name)
 
 ################
 # Helper Methods
 ################
+
+
 def normalize_input_values(config, devices):
     # This is special for pcdummy and his ext_pillar mongo usage.
     #
@@ -3206,7 +3241,7 @@ def normalize_input_values(config, devices):
     #
     # MongoDB doesn't like dots in field names.
     if isinstance(config, list):
-        if (len(config) > 0 and
+        if (config and
                 'key' in config[0] and
                 'value' in config[0]):
             config = {d['key']: d['value'] for d in config}
@@ -3260,73 +3295,72 @@ def sync_config_devices(obj, newconfig, newdevices, test=False):
     if newconfig is None:
         newconfig = {}
 
-    if True:
-        newconfig = dict(zip(
-            map(six.text_type, newconfig.keys()),
-            map(six.text_type, newconfig.values())
-        ))
-        cck = set(newconfig.keys())
+    newconfig = dict(list(zip(
+        map(six.text_type, newconfig.keys()),
+        map(six.text_type, newconfig.values())
+    )))
+    cck = set(newconfig.keys())
 
-        obj.config = dict(zip(
-            map(six.text_type, obj.config.keys()),
-            map(six.text_type, obj.config.values())
-        ))
-        ock = set(obj.config.keys())
+    obj.config = dict(list(zip(
+        map(six.text_type, obj.config.keys()),
+        map(six.text_type, obj.config.values())
+    )))
+    ock = set(obj.config.keys())
 
-        config_changes = {}
-        # Removed keys
-        for k in ock.difference(cck):
-            # Ignore LXD internals.
-            if k.startswith('volatile.') or k.startswith('image.'):
-                continue
+    config_changes = {}
+    # Removed keys
+    for k in ock.difference(cck):
+        # Ignore LXD internals.
+        if k.startswith('volatile.') or k.startswith('image.'):
+            continue
 
+        if not test:
+            config_changes[k] = (
+                'Removed config key "{0}", its value was "{1}"'
+            ).format(k, obj.config[k])
+            del obj.config[k]
+        else:
+            config_changes[k] = (
+                'Would remove config key "{0} with value "{1}"'
+            ).format(k, obj.config[k])
+
+    # same keys
+    for k in cck.intersection(ock):
+        # Ignore LXD internals.
+        if k.startswith('volatile.') or k.startswith('image.'):
+            continue
+
+        if newconfig[k] != obj.config[k]:
             if not test:
                 config_changes[k] = (
-                    'Removed config key "{0}", its value was "{1}"'
-                ).format(k, obj.config[k])
-                del obj.config[k]
-            else:
-                config_changes[k] = (
-                    'Would remove config key "{0} with value "{1}"'
-                ).format(k, obj.config[k])
-
-        # same keys
-        for k in cck.intersection(ock):
-            # Ignore LXD internals.
-            if k.startswith('volatile.') or k.startswith('image.'):
-                continue
-
-            if newconfig[k] != obj.config[k]:
-                if not test:
-                    config_changes[k] = (
-                        'Changed config key "{0}" to "{1}", '
-                        'its value was "{2}"'
-                    ).format(k, newconfig[k], obj.config[k])
-                    obj.config[k] = newconfig[k]
-                else:
-                    config_changes[k] = (
-                        'Would change config key "{0}" to "{1}", '
-                        'its current value is "{2}"'
-                    ).format(k, newconfig[k], obj.config[k])
-
-        # New keys
-        for k in cck.difference(ock):
-            # Ignore LXD internals.
-            if k.startswith('volatile.') or k.startswith('image.'):
-                continue
-
-            if not test:
-                config_changes[k] = (
-                    'Added config key "{0}" = "{1}"'
-                ).format(k, newconfig[k])
+                    'Changed config key "{0}" to "{1}", '
+                    'its value was "{2}"'
+                ).format(k, newconfig[k], obj.config[k])
                 obj.config[k] = newconfig[k]
             else:
                 config_changes[k] = (
-                    'Would add config key "{0}" = "{1}"'
-                ).format(k, newconfig[k])
+                    'Would change config key "{0}" to "{1}", '
+                    'its current value is "{2}"'
+                ).format(k, newconfig[k], obj.config[k])
 
-        if config_changes:
-            changes['config'] = config_changes
+    # New keys
+    for k in cck.difference(ock):
+        # Ignore LXD internals.
+        if k.startswith('volatile.') or k.startswith('image.'):
+            continue
+
+        if not test:
+            config_changes[k] = (
+                'Added config key "{0}" = "{1}"'
+            ).format(k, newconfig[k])
+            obj.config[k] = newconfig[k]
+        else:
+            config_changes[k] = (
+                'Would add config key "{0}" = "{1}"'
+            ).format(k, newconfig[k])
+
+    if config_changes:
+        changes['config'] = config_changes
 
     else:
         if obj.config != {}:
@@ -3341,66 +3375,65 @@ def sync_config_devices(obj, newconfig, newdevices, test=False):
     if newdevices is None:
         newdevices = {}
 
-    if True:
-        dk = set(obj.devices.keys())
-        ndk = set(newdevices.keys())
+    dk = set(obj.devices.keys())
+    ndk = set(newdevices.keys())
 
-        devices_changes = {}
-        # Removed devices
-        for k in dk.difference(ndk):
-            # Ignore LXD internals.
-            if k == u'root':
-                continue
+    devices_changes = {}
+    # Removed devices
+    for k in dk.difference(ndk):
+        # Ignore LXD internals.
+        if k == u'root':
+            continue
 
+        if not test:
+            devices_changes[k] = (
+                'Removed device "{0}"'
+            ).format(k)
+            del obj.devices[k]
+        else:
+            devices_changes[k] = (
+                'Would remove device "{0}"'
+            ).format(k)
+
+    # Changed devices
+    for k, v in six.iteritems(obj.devices):
+        # Ignore LXD internals also for new devices.
+        if k == u'root':
+            continue
+
+        if k not in newdevices:
+            # In test mode we don't delete devices above.
+            continue
+
+        if newdevices[k] != v:
             if not test:
                 devices_changes[k] = (
-                    'Removed device "{0}"'
-                ).format(k)
-                del obj.devices[k]
-            else:
-                devices_changes[k] = (
-                    'Would remove device "{0}"'
-                ).format(k)
-
-        # Changed devices
-        for k, v in six.iteritems(obj.devices):
-            # Ignore LXD internals also for new devices.
-            if k == u'root':
-                continue
-
-            if k not in newdevices:
-                # In test mode we don't delete devices above.
-                continue
-
-            if newdevices[k] != v:
-                if not test:
-                    devices_changes[k] = (
-                        'Changed device "{0}"'
-                    ).format(k)
-                    obj.devices[k] = newdevices[k]
-                else:
-                    devices_changes[k] = (
-                        'Would change device "{0}"'
-                    ).format(k)
-
-        # New devices
-        for k in ndk.difference(dk):
-            # Ignore LXD internals.
-            if k == u'root':
-                continue
-
-            if not test:
-                devices_changes[k] = (
-                    'Added device "{0}"'
+                    'Changed device "{0}"'
                 ).format(k)
                 obj.devices[k] = newdevices[k]
             else:
                 devices_changes[k] = (
-                    'Would add device "{0}"'
+                    'Would change device "{0}"'
                 ).format(k)
 
-        if devices_changes:
-            changes['devices'] = devices_changes
+    # New devices
+    for k in ndk.difference(dk):
+        # Ignore LXD internals.
+        if k == u'root':
+            continue
+
+        if not test:
+            devices_changes[k] = (
+                'Added device "{0}"'
+            ).format(k)
+            obj.devices[k] = newdevices[k]
+        else:
+            devices_changes[k] = (
+                'Would add device "{0}"'
+            ).format(k)
+
+    if devices_changes:
+        changes['devices'] = devices_changes
 
     else:
         if obj.devices != {}:
@@ -3548,5 +3581,6 @@ class FilesManager(Container.FilesManager):
             self._container.name].files.post(
             params={'path': filepath}, data=data, headers=headers)
         return response.status_code == 200
+
 
 Container.FilesManager = FilesManager
