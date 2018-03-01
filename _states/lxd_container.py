@@ -57,7 +57,7 @@ def __virtual__():
 def present(name,
             running=None,
             source=None,
-            profiles=['default'],
+            profiles=None,
             config=None,
             devices=None,
             architecture='x86_64',
@@ -159,6 +159,9 @@ def present(name,
         but in the most cases you want to set it off as LXD
         normaly uses self-signed certificates.
     '''
+    if profiles is None:
+        profiles = ['default']
+
     if source is None:
         source = {}
 
