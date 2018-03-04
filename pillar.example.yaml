@@ -1,181 +1,53 @@
 lxd:
-  lxd:
-    run_init: true
-    init:
-      trust_password: PaSsW0Rd
-      network_address: "[::]"
-      network_port: 8443
-  python:
-    use_pip: true
-  remotes:
+  containers:
     local:
-      type: lxd
-      remote_addr: https://srv01:8443
-      cert: "/root/.config/lxc/client.crt"
-      key: "/root/.config/lxc/client.key"
-      verify_cert: false
-      password: PaSsW0Rd
-    srv02:
-      type: lxd
-      remote_addr: https://srv02:8443
-      cert: "/root/.config/lxc/client.crt"
-      key: "/root/.config/lxc/client.key"
-      verify_cert: false
-      password: PaSsW0Rd
+      bootstraptest:
+        opts:
+          require:
+          - {lxd_profile: lxd_profile_local_default}
+          - {lxd_profile: lxd_profile_local_autostart}
+          - {lxd_image: lxd_image_local_ubuntu_xenial_amd64}
+        profiles: [default, autostart]
+        running: true
+        source: xenial/amd64
+        bootstrap_scripts:
+          - cmd: [ '/bin/sleep', '2' ]
+
+          - src: salt://lxd/scripts/bootstrap.sh
+            dst: /root/bootstrap.sh
+            cmd: [ '/root/bootstrap.sh', 'bootstraptest', 'pcdummy.lan', 'salt.pcdummy.lan', 'true' ]
+
+          - cmd: [ '/usr/bin/salt-call', 'state.apply' ]
+
+  images:
+    local:
+      ubuntu_xenial_amd64:
+        name: ubuntu/xenial/amd64
+        aliases:
+          - xenial/amd64
+          - ubuntu/xenial/amd64
+        auto_update: true
+        public: false
+        source:
+          name: ubuntu/xenial/amd64
+          remote: images_linuxcontainers_org
+  lxd:
+    init: {network_address: '[::]', network_port: 8443, trust_password: PassW0rd}
+    run_init: true
   profiles:
     local:
+      autostart:
+        config:
+          boot.autostart: 1
+          boot.autostart.delay: 2
+          boot.autostart.priority: 1
       default:
         devices:
           eth0:
             nictype: bridged
             parent: lanbr0
             type: nic
-      autostart:
-        config:
-        - key: boot.autostart
-          value: 1
-        - key: boot.autostart.delay
-          value: 2
-        - key: boot.autostart.priority
-          value: 1
-  images:
-    local:
-      trusty_amd64:
-        name: trusty/amd64
-        source:
-          name: ubuntu/trusty/amd64
-          remote: images_linuxcontainers_org
-        aliases:
-        - trusty/amd64
-        public: false
-        auto_update: true
-      xenial_amd64:
-        name: xenial/amd64
-        source:
-          name: xenial/amd64
-          remote: ubuntu
-        aliases:
-        - xenial/amd64
-        public: false
-        auto_update: true
-  containers:
-    local:
-      aptcacher:
-        running: true
-        source: xenial/amd64
-        profiles:
-        - default
-        - autostart
-        devices:
-          cdata:
-            type: disk
-            source: "/cdata/aptcacher"
-            path: data
-        opts:
-          require:
-          - lxd_profile: lxd_profile_local_default
-          - lxd_profile: lxd_profile_local_autostart
-          - lxd_image: lxd_image_local_xenial_amd64
-      files2:
-        running: true
-        source: xenial/amd64
-        profiles:
-        - default
-        - autostart
-        devices:
-          mntdir-cdata:
-            type: disk
-            source: "/cdata"
-            path: cdata
-          mntdir-media:
-            type: disk
-            source: "/media/MEDIEN"
-            path: media/MEDIEN
-        opts:
-          require:
-          - lxd_profile: lxd_profile_local_default
-          - lxd_profile: lxd_profile_local_autostart
-          - lxd_image: lxd_image_local_xenial_amd64
-      mongo1:
-        running: true
-        source: xenial/amd64
-        profiles:
-        - default
-        - autostart
-        config:
-        - key: security.privileged
-          value: true
-        devices:
-          cdata:
-            type: disk
-            source: "/cdata/mongo1"
-            path: "/data"
-        opts:
-          require:
-          - lxd_profile: lxd_profile_local_default
-          - lxd_profile: lxd_profile_local_autostart
-          - lxd_image: lxd_image_local_xenial_amd64
-      saltmaster:
-        running: true
-        source: xenial/amd64
-        profiles:
-        - default
-        - autostart
-        devices:
-          cdata:
-            type: disk
-            source: "/cdata/saltmaster"
-            path: data
-        opts:
-          require:
-          - lxd_profile: lxd_profile_local_default
-          - lxd_profile: lxd_profile_local_autostart
-          - lxd_image: lxd_image_local_xenial_amd64
-      mysql1:
-        running: true
-        source: xenial/amd64
-        profiles:
-        - default
-        - autostart
-        devices:
-          cdata:
-            type: disk
-            source: "/cdata/mysql1"
-            path: "/data"
-        opts:
-          require:
-          - lxd_profile: lxd_profile_local_default
-          - lxd_profile: lxd_profile_local_autostart
-          - lxd_image: lxd_image_local_xenial_amd64
-      phpmyadmin:
-        running: true
-        source: xenial/amd64
-        profiles:
-        - default
-        - autostart
-        devices:
-          cdata:
-            type: disk
-            source: "/cdata/phpmyadmin"
-            path: "/data"
-        opts:
-          require:
-          - lxd_profile: lxd_profile_local_default
-          - lxd_profile: lxd_profile_local_autostart
-          - lxd_image: lxd_image_local_xenial_amd64
-      solarsketch:
-        running: true
-        source: xenial/amd64
-        profiles:
-        - default
-        - autostart
-        devices:
-          cdata:
-            type: disk
-            source: "/cdata/solarsketch"
-            path: "/data"
-        opts:
-          require:
-          - lxd_profile: lxd_profile_local_default
-          - lxd_profile: lxd_profile_local_autostart
-          - lxd_image: lxd_image_local_xenial_amd64
+  python: {use_pip: true}
+  remotes:
+    local: {cert: /root/.config/lxc/client.crt, key: /root/.config/lxc/client.key,
+      password: PassW0rd, remote_addr: 'https://srv03:8443', type: lxd, verify_cert: false}

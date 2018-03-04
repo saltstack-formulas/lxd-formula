@@ -11,6 +11,7 @@ This formula will allow you to:
 - Create some default settings for containers (profiles).
 - Pull an image from various sources.
 - Create a container with an image.
+- Bootstrap the given container (run salt-minion in it or whatever you want).
 - Start/Stop/Restart/Freeze/Unfreeze/Migrate a container.
 - And finally undo all of the above.
 
@@ -20,33 +21,12 @@ Before we forget it, `LXD`_ and this formula allows you to
 .. _LXD: https://linuxcontainers.org/lxd/
 
 
-TODOS
-=====
-
-- For container states (_states/lxd_container.py)
-
- * Add support file put (including salt:// scheme)
- * Add support file get
- * Add support execute
-
-The functionality for this is available in the module:
-
-.. code-block:: bash
-
-   salt <minion> lxd.container_put <name> host_src container_dst [mode=0600] [uid=0] [gid=0]
-
-   salt <minion> lxd.container_get <name> container_src host_dst
-
-   salt <minion> lxd.container_execute <name> '["ls", "-l"]'
-
-
-
 Requirements
 ============
 
 - There are currently only LXD packages for Ubuntu GNU/Linux so for the daemon
   you need Ubuntu.
-- This has been tested with Saltstack `2016.3.1`, we don't know if it
+- This has been tested with Saltstack `2017.7.4`, we don't know if it
   works with other versions.
 - `PyLXD`_ version 2.2.5 from PIP (enable use_pip and it will get that version!).
 
@@ -70,6 +50,15 @@ Per git remote
 
     gitfs_remotes:
       - https://github.com/saltstack-formulas/saltstack-lxd-formula.git
+
+
+Call saltutil.sync_modules and saltutil.sync_states
+---------------------------------------------------
+
+.. code-block:: bash
+
+    salt \* saltutil.sync_modules
+    salt \* saltutil.sync_states
 
 
 Available states
@@ -513,6 +502,26 @@ We also add a higher start priority and a device eth1
               require:
                 - lxd_profile: lxd_profile_local_autostart
 
+Same with boostrap scripts
+++++++++++++++++++++++++++
+
+.. code-block:: yaml
+
+    lxd:
+      containers:
+        local:
+          ubuntu-xenial3:
+            profiles: [default, autostart]
+            running: true
+            source: xenial/amd64
+            bootstrap_scripts:
+              - cmd: [ '/bin/sleep', '2' ]
+
+              - src: salt://lxd/scripts/bootstrap.sh
+                dst: /root/bootstrap.sh
+                cmd: [ '/root/bootstrap.sh', 'bootstraptest', 'pcdummy.lan', 'salt.pcdummy.lan', 'true' ]
+
+              - cmd: [ '/usr/bin/salt-call', 'state.apply' ]
 
 Later you might want to migrate "ubuntu-xenial" to "srv01"
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
