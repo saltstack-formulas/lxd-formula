@@ -35,6 +35,7 @@ import os.path
 # Import salt libs
 from salt.exceptions import CommandExecutionError
 from salt.exceptions import SaltInvocationError
+import salt.ext.six as six
 
 __docformat__ = 'restructuredtext en'
 
