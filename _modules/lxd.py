@@ -1571,12 +1571,9 @@ def container_file_put(name, src, dst, recursive=False, overwrite=False,
     # Fix mode. Salt commandline doesn't use octals, so 0600 will be
     # the decimal integer 600 (and not the octal 0600). So, it it's
     # and integer, handle it as if it where a octal representation.
-
-    # Do only if mode is not None, otherwise we get 0None
-    if mode is not None:
-        mode = six.text_type(mode)
-        if not mode.startswith('0'):
-            mode = '0{0}'.format(mode)
+    mode = six.text_type(mode)
+    if not mode.startswith('0'):
+        mode = '0{0}'.format(mode)
 
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
@@ -1778,9 +1775,12 @@ def container_file_get(name, src, dst, overwrite=False,
     # Fix mode. Salt commandline doesn't use octals, so 0600 will be
     # the decimal integer 600 (and not the octal 0600). So, it it's
     # and integer, handle it as if it where a octal representation.
-    mode = six.text_type(mode)
-    if not mode.startswith('0'):
-        mode = '0{0}'.format(mode)
+
+    # Do only if mode is not None, otherwise we get 0None
+    if mode is not None:
+        mode = six.text_type(mode)
+        if not mode.startswith('0'):
+            mode = '0{0}'.format(mode)
 
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
