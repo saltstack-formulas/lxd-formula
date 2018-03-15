@@ -2026,7 +2026,11 @@ def profile_create(name, config=None, devices=None, description=None,
         devices
     )
 
-    profile = client.profiles.create(name, config, devices)
+    try:
+        profile = client.profiles.create(name, config, devices)
+    except pylxd.exceptions.LXDAPIException as e:
+        raise CommandExecutionError(six.text_type(e))
+
     if description is not None:
         profile.description = description
         pylxd_save_object(profile)
