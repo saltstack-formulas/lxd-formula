@@ -4,13 +4,13 @@
 
 {% from "lxd/map.jinja" import datamap, sls_block with context %}
 
-{% if datamap.python.use_pip %}
+{% if datamap.python.use_pip or datamap.python.use_pip_formula %}
 include:
   - pip
   - pip.extensions
 {% endif %}
 
-{% if datamap.python.use_pip %}
+{% if datamap.python.use_pip or datamap.python.use_pip_formula %}
 lxd_python_pip:
   pkg:
     - {{ datamap.python.pip_package.action }}
@@ -20,7 +20,7 @@ lxd_python_pip:
 
 lxd_python:
   pkg:
-    {% if datamap.python.use_pip %}
+    {% if datamap.python.use_pip or datamap.python.use_pip_formula %}
     - removed
     {% else %}
     - {{ datamap.python.package.action }}
@@ -29,7 +29,7 @@ lxd_python:
     - pkgs: {{ datamap.lookup.python.packages }}
     - reload_modules: True
 
-  {% if datamap.python.use_pip %}
+  {% if datamap.python.use_pip or datamap.python.use_pip_formula %}
   pip:
     - {{ datamap.python.pip_package.action }}
     {% if datamap.python.get('pip_version') %}
