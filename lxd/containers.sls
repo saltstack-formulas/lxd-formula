@@ -57,7 +57,8 @@ lxd_container_{{ remotename }}_{{ name }}:
         {%- endif %}
 
     {%- if 'bootstrap_scripts' in container %}
-lxd_container_{{ remotename }}_{{ name }}_check_executed:
+# Touch marker file, so nonexistance do not throws exception in container_file_get
+lxd_container_{{ remotename }}_{{ name }}_touch_executed:
     module.run:
         - name: lxd.container_execute
     {%- if 'name' in container %}
@@ -65,7 +66,7 @@ lxd_container_{{ remotename }}_{{ name }}_check_executed:
     {%- else %}
         - m_name: "{{ name }}"
     {%- endif %}
-        - cmd: [ 'ls', '-1', '/var/lib/salt_lxd_bootstraped']
+        - cmd: [ 'touch', '/etc/salt_lxd_bootstraped']
         - remote_addr: "{{ remote.remote_addr }}"
         - cert: "{{ remote.cert }}"
         - key: "{{ remote.key }}"
@@ -74,6 +75,32 @@ lxd_container_{{ remotename }}_{{ name }}_check_executed:
             - lxd_container: lxd_container_{{ remotename }}_{{ name }}
         {%- if remote.get('password', False) %}
         - require:
+            - lxd: lxd_remote_{{ remotename }}
+        {%- endif %}
+
+# Save marker file locally per remote and container
+lxd_container_{{ remotename }}_{{ name }}_check_executed:
+    module.run:
+        - name: lxd.container_file_get
+    {%- if 'name' in container %}
+        - m_name: "{{ container['name'] }}"
+    {%- else %}
+        - m_name: "{{ name }}"
+    {%- endif %}
+        - src: "/etc/salt_lxd_bootstraped"
+        - dst: "/tmp/salt_lxd_bootstraped_{{ remotename }}_{{ name }}"
+        - uid: 0
+        - gid: 0
+        - overwrite: True
+        - remote_addr: "{{ remote.remote_addr }}"
+        - cert: "{{ remote.cert }}"
+        - key: "{{ remote.key }}"
+        - verify_cert: {{ remote.verify_cert }}
+        - onchanges:
+            - lxd_container: lxd_container_{{ remotename }}_{{ name }}
+        - require:
+            - module: lxd_container_{{ remotename }}_{{ name }}_touch_executed
+        {%- if remote.get('password', False) %}
             - lxd: lxd_remote_{{ remotename }}
         {%- endif %}
 
@@ -94,8 +121,11 @@ lxd_container_{{ remotename }}_{{ name }}_bsc_{{ loop.index }}:
         - cert: "{{ remote.cert }}"
         - key: "{{ remote.key }}"
         - verify_cert: {{ remote.verify_cert }}
-        - onfail:
-            - module: lxd_container_{{ remotename }}_{{ name }}_check_executed
+        - onchanges:
+            - lxd_container: lxd_container_{{ remotename }}_{{ name }}
+        # Do not run if there is True in the marker file (bootstrap already executed)
+        - unless:
+            - "grep -s -q True /tmp/salt_lxd_bootstraped_{{ remotename }}_{{ name }}"
       {%- endif %}
 
 lxd_container_{{ remotename }}_{{ name }}_bse_{{ loop.index }}:
@@ -111,13 +141,14 @@ lxd_container_{{ remotename }}_{{ name }}_bse_{{ loop.index }}:
         - cert: "{{ remote.cert }}"
         - key: "{{ remote.key }}"
         - verify_cert: {{ remote.verify_cert }}
-        {%- if 'src' in script %}
         - onchanges:
+            - lxd_container: lxd_container_{{ remotename }}_{{ name }}
+        {%- if 'src' in script %}
             - module: lxd_container_{{ remotename }}_{{ name }}_bsc_{{ loop.index }}
-        {%- else %}
-        - onfail:
-            - module: lxd_container_{{ remotename }}_{{ name }}_check_executed
         {%- endif %}
+        # Do not run if there is True in the marker file (bootstrap already executed)
+        - unless:
+            - "grep -s -q True /tmp/salt_lxd_bootstraped_{{ remotename }}_{{ name }}"
 
       {%- endfor %}
 
@@ -138,15 +169,18 @@ lxd_container_{{ remotename }}_{{ name }}_restart:
             - module: lxd_container_{{ remotename }}_{{ name }}_bse_{{ loop.index }}
         {%- endfor %}
 
+# Put True in the marker file
 lxd_container_{{ remotename }}_{{ name }}_make_executed:
     module.run:
-        - name: lxd.container_execute
+        - name: lxd.container_file_put
     {%- if 'name' in container %}
         - m_name: "{{ container['name'] }}"
     {%- else %}
         - m_name: "{{ name }}"
     {%- endif %}
-        - cmd: [ 'touch', '/var/lib/salt_lxd_bootstraped']
+        - src: "salt://lxd/files/salt_lxd_bootstraped"
+        - dst: "/etc/salt_lxd_bootstraped"
+        - mode: 0600
         - remote_addr: "{{ remote.remote_addr }}"
         - cert: "{{ remote.cert }}"
         - key: "{{ remote.key }}"

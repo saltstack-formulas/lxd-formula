@@ -1571,9 +1571,12 @@ def container_file_put(name, src, dst, recursive=False, overwrite=False,
     # Fix mode. Salt commandline doesn't use octals, so 0600 will be
     # the decimal integer 600 (and not the octal 0600). So, it it's
     # and integer, handle it as if it where a octal representation.
-    mode = six.text_type(mode)
-    if not mode.startswith('0'):
-        mode = '0{0}'.format(mode)
+
+    # Do only if mode is not None, otherwise we get 0None
+    if mode is not None:
+        mode = six.text_type(mode)
+        if not mode.startswith('0'):
+            mode = '0{0}'.format(mode)
 
     container = container_get(
         name, remote_addr, cert, key, verify_cert, _raw=True
@@ -1809,7 +1812,8 @@ def container_file_get(name, src, dst, overwrite=False,
             raise CommandExecutionError(
                 'No such file or directory \'{0}\''.format(dst_path)
             )
-        dst = os.path.join(dst, os.path.basename(src))
+        # Seems to be duplicate of line 1794, produces /path/file_name/file_name
+        #dst = os.path.join(dst, os.path.basename(src))
 
     with salt.utils.fopen(dst, 'wb') as df:
         df.write(container.files.get(src))
