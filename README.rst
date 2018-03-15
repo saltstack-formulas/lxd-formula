@@ -510,7 +510,7 @@ We also add a higher start priority and a device eth1
               require:
                 - lxd_profile: lxd_profile_local_autostart
 
-Same with boostrap scripts
+Same with bootstrap scripts
 ++++++++++++++++++++++++++
 
 .. code-block:: yaml
@@ -518,7 +518,7 @@ Same with boostrap scripts
     lxd:
       containers:
         local:
-          ubuntu-xenial3:
+          xenial3:
             profiles: [default, autostart]
             running: true
             source: xenial/amd64
@@ -527,7 +527,7 @@ Same with boostrap scripts
 
               - src: salt://lxd/scripts/bootstrap.sh
                 dst: /root/bootstrap.sh
-                cmd: [ '/root/bootstrap.sh', 'bootstraptest', 'pcdummy.lan', 'salt.pcdummy.lan', 'true' ]
+                cmd: [ '/root/bootstrap.sh', 'xenial3', 'pcdummy.lan', 'salt.pcdummy.lan', 'true' ]
 
               - cmd: [ '/usr/bin/salt-call', 'state.apply' ]
 
