@@ -55,11 +55,19 @@ Per git remote
 Call saltutil.sync_modules and saltutil.sync_states
 ---------------------------------------------------
 
+- Master and Minions
+
 .. code-block:: bash
 
     salt \* saltutil.sync_modules
     salt \* saltutil.sync_states
 
+- Masterless Minion
+
+.. code-block:: bash
+
+    salt-call --local saltutil.sync_modules
+    salt-call --local saltutil.sync_states
 
 Available states
 ================
@@ -233,9 +241,9 @@ Also:
 
 .. code-block:: bash
 
-   salt-call lxd.profile_list --out=json
+   salt-call lxd.profile_list --out=json [ --local ]
 
-   salt-call lxd.container_list --out=json
+   salt-call lxd.container_list --out=json [ --local ]
 
 gives nice informations about profile config keys and devices.
 
