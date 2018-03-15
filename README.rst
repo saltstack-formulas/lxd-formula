@@ -410,7 +410,7 @@ And with ``lxc image list images:`` you get a list of aliases.
     lxd:
       images:
         local:
-          xenial/amd64:
+          xenial_amd64:
             name: xenial/amd64    # Its alias
             source:
               name: ubuntu/xenial/amd64
