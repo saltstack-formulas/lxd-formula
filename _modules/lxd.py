@@ -2783,9 +2783,13 @@ def image_from_simplestreams(server,
         aliases = []
 
     client = pylxd_client_get(remote_addr, cert, key, verify_cert)
-    image = client.images.create_from_simplestreams(
-        server, alias, public=public, auto_update=auto_update
-    )
+
+    try:
+        image = client.images.create_from_simplestreams(
+            server, alias, public=public, auto_update=auto_update
+        )
+    except pylxd.exceptions.LXDAPIException as e:
+        raise CommandExecutionError(six.text_type(e))
 
     # Aliases support
     for alias in aliases:
@@ -2860,9 +2864,13 @@ def image_from_url(url,
         aliases = []
 
     client = pylxd_client_get(remote_addr, cert, key, verify_cert)
-    image = client.images.create_from_url(
-        url, public=public, auto_update=auto_update
-    )
+
+    try:
+        image = client.images.create_from_url(
+            url, public=public, auto_update=auto_update
+        )
+    except pylxd.exceptions.LXDAPIException as e:
+        raise CommandExecutionError(six.text_type(e))
 
     # Aliases support
     for alias in aliases:
@@ -2942,7 +2950,11 @@ def image_from_file(filename,
         data = fp.read()
 
     client = pylxd_client_get(remote_addr, cert, key, verify_cert)
-    image = client.images.create(data, public=public, wait=True)
+
+    try:
+        image = client.images.create(data, public=public, wait=True)
+    except pylxd.exceptions.LXDAPIException as e:
+        raise CommandExecutionError(six.text_type(e))
 
     # Aliases support
     for alias in aliases:
