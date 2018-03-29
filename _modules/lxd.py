@@ -3486,15 +3486,18 @@ def _set_property_dict_item(obj, prop, key, value):
     attr = getattr(obj, prop)
     if prop == 'devices':
         device_type = value['type']
-        if device_type == 'disk' and 'source' not in value:
-            raise SaltInvocationError(
-                "source must be given as parameter"
-            )
 
-        if device_type == 'disk' and 'path' not in value:
-            raise SaltInvocationError(
-                "path must be given as parameter"
-            )
+        if device_type == 'disk':
+
+            if 'path' not in value:
+                raise SaltInvocationError(
+                    "path must be given as parameter"
+                )
+
+            if value['path'] != '/' and 'source' not in value:
+                raise SaltInvocationError(
+                    "source must be given as parameter"
+                )
 
         for k in value.keys():
             if k.startswith('__'):
