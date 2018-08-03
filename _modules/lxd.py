@@ -2549,7 +2549,7 @@ def image_list(list_aliases=False, remote_addr=None,
     if list_aliases:
         return {i.fingerprint: [a['name'] for a in i.aliases] for i in images}
 
-    return [_pylxd_model_to_dict(i) for in in images]
+    return [_pylxd_model_to_dict(i) for i in images]
 
 
 def image_get(fingerprint,
