@@ -86,11 +86,8 @@
       'verify_cert': False
     },
     'images_linuxcontainers_org': {
-      'type': 'lxd',
-      'remote_addr': 'https://images.linuxcontainers.org',
-      'cert': '~/.config/lxc/client.crt',
-      'key': '~/.config/lxc/client.key',
-      'verify_cert': False
+      'type': 'simplestreams',
+      'server': 'https://images.linuxcontainers.org'
     },
     'ubuntu': {
       'type': 'simplestreams',
