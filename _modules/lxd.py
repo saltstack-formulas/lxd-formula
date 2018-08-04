@@ -1968,7 +1968,7 @@ def profile_list(list_names=False, remote_addr=None,
     if list_names:
         return [p.name for p in profiles]
 
-    return map(_pylxd_model_to_dict, profiles)
+    return [_pylxd_model_to_dict(i) for i in profiles]
 
 
 def profile_create(name, config=None, devices=None, description=None,
@@ -2549,7 +2549,7 @@ def image_list(list_aliases=False, remote_addr=None,
     if list_aliases:
         return {i.fingerprint: [a['name'] for a in i.aliases] for i in images}
 
-    return map(_pylxd_model_to_dict, images)
+    return [_pylxd_model_to_dict(i) for i in images]
 
 
 def image_get(fingerprint,
