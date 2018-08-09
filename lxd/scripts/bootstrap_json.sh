@@ -94,5 +94,5 @@ echoinfo "Install salt-minion"
 /usr/bin/apt-get -qy -o 'DPkg::Options::=--force-confold' -o 'DPkg::Options::=--force-confdef' install wget
 cd /root
 /usr/bin/wget -O bootstrap_salt.sh https://bootstrap.saltstack.com
-/bin/sh /root/bootstrap_salt.sh -j ${3} ${4}
+/bin/sh /root/bootstrap_salt.sh -j "${3}" ${4}
 rm -f /root/boostrap_salt.sh
