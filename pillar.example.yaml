@@ -51,7 +51,6 @@ lxd:
             nictype: macvlan
             parent: eth1
             type: nic
-  #python: {use_pip: true}
   #remotes:
   #  local: {cert: /root/.config/lxc/client.crt, key: /root/.config/lxc/client.key,
   #    password: PassW0rd, remote_addr: 'https://srv03:8443', type: lxd, verify_cert: false}

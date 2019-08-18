@@ -28,7 +28,7 @@ Requirements
   you need Ubuntu.
 - This has been tested with Saltstack `2017.7.4`, we don't know if it
   works with other versions.
-- `PyLXD`_ version 2.2.5 from PIP (enable use_pip and it will get that version!).
+- `PyLXD`_ version 2.2.5 from PIP
 
 .. _PyLXD: https://github.com/lxc/pylxd
 .. _169: https://github.com/lxc/pylxd/pull/169
@@ -98,10 +98,6 @@ To not listen on the network and use the default storage engine:
       lxd:
         run_init: True
 
-      python:
-        # Currently pylxd version 2 is required for the lxd module to work.
-        use_pip: True
-
 To listen on the network:
 
 .. code-block:: yaml
@@ -115,10 +111,6 @@ To listen on the network:
           network_address: "[::]"
           network_port: "8443"
 
-
-      python:
-        # Currently pylxd version 2 is required for the lxd module to work.
-        use_pip: True
 
 Config examples
 +++++++++++++++
@@ -149,10 +141,6 @@ Config examples
             value: "[fd57:1:see:bad:c0de::14]:8443"
 
 
-      python:
-        # Currently pylxd version 2 is required for the lxd module to work.
-        use_pip: True
-
 
 ``lxd.client``
 --------------
@@ -163,7 +151,7 @@ Installs the lxd client - its a simple package installer for `lxd-client` (on De
 ``lxd.python``
 --------------
 
-Installs pylxd, this requires the `pip-formula`_ if you enable "use_pip".
+Installs pylxd, this requires the `pip-formula`_ if you enable "use_pip_formula".
 
 .. _pip-formula: https://github.com/saltstack-formulas/pip-formula
 
