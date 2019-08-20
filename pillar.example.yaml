@@ -1,4 +1,8 @@
 lxd:
+  lookup:
+    python:
+      packages:
+        - python3-pip
   containers:
     local:
       bootstraptest:
@@ -44,10 +48,9 @@ lxd:
       default:
         devices:
           eth0:
-            nictype: bridged
-            parent: lanbr0
+            nictype: macvlan
+            parent: eth1
             type: nic
-  python: {use_pip: true}
-  remotes:
-    local: {cert: /root/.config/lxc/client.crt, key: /root/.config/lxc/client.key,
-      password: PassW0rd, remote_addr: 'https://srv03:8443', type: lxd, verify_cert: false}
+  #remotes:
+  #  local: {cert: /root/.config/lxc/client.crt, key: /root/.config/lxc/client.key,
+  #    password: PassW0rd, remote_addr: 'https://srv03:8443', type: lxd, verify_cert: false}
