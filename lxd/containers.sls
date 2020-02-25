@@ -30,7 +30,7 @@ lxd_container_{{ remotename }}_{{ name }}:
     - profiles: {{ container.profiles }}
     {%- endif %}
     {%- if 'config' in container %}
-    - config: {{ container.config }}
+    - config: {{ container.config | tojson }}
     {%- endif %}
     {%- if 'devices' in container %}
     - devices: {{ container.devices }}

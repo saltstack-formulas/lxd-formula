@@ -28,7 +28,7 @@ lxd_profile_{{ remotename }}_{{ name }}:
     - description: "{{ profile.description }}"
         {%- endif %}
         {%- if profile.get('config', False) %}
-    - config: {{ profile.config }}
+    - config: {{ profile.config | tojson }}
         {%- endif %}
         {%- if profile.get('devices', False) %}
     - devices: {{ profile.devices }}
